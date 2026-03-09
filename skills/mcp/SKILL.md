@@ -34,10 +34,18 @@ const server = createMcpApp({
 await server.connect(new StdioServerTransport());
 ```
 
-### Client (React, inside iframe)
+### Client (inside iframe)
+
+Framework-specific adapters connect to the MCP host and maintain the current spec:
+
+- `@json-render/mcp/app/react` -- `useJsonRenderApp()` React hook
+- `@json-render/mcp/app/vue` -- `useJsonRenderApp()` Vue composable
+- `@json-render/mcp/app/svelte` -- `createJsonRenderApp()` Svelte stores
+
+#### React
 
 ```tsx
-import { useJsonRenderApp } from "@json-render/mcp/app";
+import { useJsonRenderApp } from "@json-render/mcp/app/react";
 import { JSONUIProvider, Renderer } from "@json-render/react";
 
 function McpAppView({ registry }) {
@@ -52,12 +60,50 @@ function McpAppView({ registry }) {
 }
 ```
 
+#### Vue
+
+```vue
+<script setup>
+import { useJsonRenderApp } from "@json-render/mcp/app/vue";
+import { Renderer } from "@json-render/vue";
+
+const { spec, loading, error } = useJsonRenderApp();
+</script>
+
+<template>
+  <div v-if="error">Error: {{ error.message }}</div>
+  <div v-else-if="!spec">Waiting...</div>
+  <Renderer v-else :spec="spec" :registry="registry" :loading="loading" />
+</template>
+```
+
+#### Svelte
+
+```svelte
+<script>
+  import { createJsonRenderApp } from "@json-render/mcp/app/svelte";
+  import { Renderer } from "@json-render/svelte";
+  import { onDestroy } from "svelte";
+
+  const { spec, loading, error, destroy } = createJsonRenderApp();
+  onDestroy(destroy);
+</script>
+
+{#if $error}
+  <div>Error: {$error.message}</div>
+{:else if !$spec}
+  <div>Waiting...</div>
+{:else}
+  <Renderer spec={$spec} {registry} loading={$loading} />
+{/if}
+```
+
 ## Architecture
 
 1. `createMcpApp()` creates an `McpServer` that registers a `render-ui` tool and a `ui://` HTML resource
 2. The tool description includes the catalog prompt so the LLM knows how to generate valid specs
-3. The HTML resource is a Vite-bundled single-file React app with json-render renderers
-4. Inside the iframe, `useJsonRenderApp()` connects to the host via `postMessage` and renders specs
+3. The HTML resource is a Vite-bundled single-file app (React, Vue, or Svelte) with json-render renderers
+4. Inside the iframe, the framework adapter connects to the host via `postMessage` and renders specs
 
 ## Server API
 
@@ -65,17 +111,21 @@ function McpAppView({ registry }) {
 - `registerJsonRenderTool(server, options)` - register a json-render tool on an existing server
 - `registerJsonRenderResource(server, options)` - register the UI resource
 
-## Client API (`@json-render/mcp/app`)
+## Client API
 
-- `useJsonRenderApp(options?)` - React hook, returns `{ spec, loading, connected, error, callServerTool }`
-- `buildAppHtml(options)` - generate HTML from bundled JS/CSS
+- `buildAppHtml(options)` (`@json-render/mcp/app`) - generate HTML from bundled JS/CSS
+- `useJsonRenderApp(options?)` (`@json-render/mcp/app/react`) - React hook
+- `useJsonRenderApp(options?)` (`@json-render/mcp/app/vue`) - Vue composable
+- `createJsonRenderApp(options?)` (`@json-render/mcp/app/svelte`) - Svelte stores + `destroy()`
+
+All adapters return `{ spec, loading, connected, connecting, error, app, callServerTool }`.
 
 ## Building the iframe HTML
 
-Bundle the React app into a single self-contained HTML file using Vite + `vite-plugin-singlefile`:
+Bundle your app into a single self-contained HTML file using Vite + `vite-plugin-singlefile`. Add the appropriate framework plugin:
 
 ```typescript
-// vite.config.ts
+// vite.config.ts (React example)
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { viteSingleFile } from "vite-plugin-singlefile";
@@ -120,9 +170,11 @@ export default defineConfig({
 # Server
 npm install @json-render/mcp @json-render/core @modelcontextprotocol/sdk
 
-# Client (iframe)
-npm install @json-render/react @json-render/shadcn react react-dom
+# Client (iframe) -- pick your framework
+npm install @json-render/react react react-dom        # React
+npm install @json-render/vue vue                      # Vue
+npm install @json-render/svelte svelte                # Svelte
 
 # Build tools
-npm install -D vite @vitejs/plugin-react vite-plugin-singlefile
+npm install -D vite vite-plugin-singlefile
 ```

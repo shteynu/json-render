@@ -1,7 +1,7 @@
 import { JSONUIProvider, Renderer } from "@json-render/react";
 import { shadcnComponents } from "@json-render/shadcn";
 import { defineRegistry } from "@json-render/react";
-import { useJsonRenderApp } from "@json-render/mcp/app";
+import { useJsonRenderApp } from "@json-render/mcp/app/react";
 import { catalog } from "./catalog";
 import { useState, useEffect } from "react";
 

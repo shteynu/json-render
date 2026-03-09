@@ -5,11 +5,18 @@
  * This module is intended to run **inside the sandboxed iframe** that
  * MCP hosts render. It connects to the host via the MCP Apps protocol,
  * receives tool results containing json-render specs, and provides
- * React hooks / helpers to render them.
+ * framework-specific hooks / helpers to render them.
+ *
+ * Framework-specific adapters are available at:
+ * - `@json-render/mcp/app/react`  — React hook
+ * - `@json-render/mcp/app/vue`    — Vue composable
+ * - `@json-render/mcp/app/svelte` — Svelte stores
+ *
+ * The React hook is also re-exported here for backward compatibility.
  *
  * @example
  * ```tsx
- * import { useJsonRenderApp } from "@json-render/mcp/app";
+ * import { useJsonRenderApp } from "@json-render/mcp/app/react";
  * import { Renderer } from "@json-render/react";
  *
  * function McpAppView({ registry }) {
@@ -21,10 +28,11 @@
  * @packageDocumentation
  */
 
-export { useJsonRenderApp } from "./use-json-render-app.js";
+export { useJsonRenderApp } from "./app/react.js";
 export type {
   UseJsonRenderAppOptions,
   UseJsonRenderAppReturn,
-} from "./use-json-render-app.js";
+} from "./app/react.js";
 export { buildAppHtml } from "./build-app-html.js";
 export type { BuildAppHtmlOptions } from "./build-app-html.js";
+export type { JsonRenderAppOptions, JsonRenderAppState } from "./app/shared.js";

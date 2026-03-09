@@ -46,10 +46,12 @@ await server.connect(new StdioServerTransport());
 
 ### 3. Build the UI (iframe)
 
-Create a React app that uses `useJsonRenderApp` from `@json-render/mcp/app`:
+Create an app that connects to the MCP host and renders specs. Framework-specific adapters are available for React, Vue, and Svelte.
+
+#### React
 
 ```tsx
-import { useJsonRenderApp } from "@json-render/mcp/app";
+import { useJsonRenderApp } from "@json-render/mcp/app/react";
 import { JSONUIProvider, Renderer } from "@json-render/react";
 
 function McpAppView({ registry }) {
@@ -64,6 +66,44 @@ function McpAppView({ registry }) {
     </JSONUIProvider>
   );
 }
+```
+
+#### Vue
+
+```vue
+<script setup>
+import { useJsonRenderApp } from "@json-render/mcp/app/vue";
+import { Renderer } from "@json-render/vue";
+
+const { spec, loading, error } = useJsonRenderApp();
+</script>
+
+<template>
+  <div v-if="error">Error: {{ error.message }}</div>
+  <div v-else-if="!spec">Waiting for spec...</div>
+  <Renderer v-else :spec="spec" :registry="registry" :loading="loading" />
+</template>
+```
+
+#### Svelte
+
+```svelte
+<script>
+  import { createJsonRenderApp } from "@json-render/mcp/app/svelte";
+  import { Renderer } from "@json-render/svelte";
+  import { onDestroy } from "svelte";
+
+  const { spec, loading, error, destroy } = createJsonRenderApp();
+  onDestroy(destroy);
+</script>
+
+{#if $error}
+  <div>Error: {$error.message}</div>
+{:else if !$spec}
+  <div>Waiting for spec...</div>
+{:else}
+  <Renderer spec={$spec} {registry} loading={$loading} />
+{/if}
 ```
 
 Bundle with Vite + `vite-plugin-singlefile` into a single HTML file, then pass it to `createMcpApp` as the `html` option.
@@ -107,17 +147,29 @@ Register a json-render tool on an existing `McpServer`.
 
 Register a json-render UI resource on an existing `McpServer`.
 
-### Client Side (`@json-render/mcp/app`)
+### Client Side
 
-#### `useJsonRenderApp(options?)`
+#### `buildAppHtml(options)` — `@json-render/mcp/app`
+
+Generate a self-contained HTML string from bundled JS/CSS for use as a UI resource.
+
+#### `useJsonRenderApp(options?)` — `@json-render/mcp/app/react`
 
 React hook for the iframe-side app. Connects to the MCP host, receives tool results, and maintains the current json-render spec.
 
 Returns `{ spec, loading, connected, connecting, error, app, callServerTool }`.
 
-#### `buildAppHtml(options)`
+#### `useJsonRenderApp(options?)` — `@json-render/mcp/app/vue`
 
-Generate a self-contained HTML string from bundled JS/CSS for use as a UI resource.
+Vue composable with the same API shape. Values are Vue refs/computed properties.
+
+Returns `{ spec, loading, connected, connecting, error, app, callServerTool }`.
+
+#### `createJsonRenderApp(options?)` — `@json-render/mcp/app/svelte`
+
+Creates a json-render MCP App client using Svelte stores. Values are readable stores.
+
+Returns `{ spec, loading, connected, connecting, error, app, callServerTool, destroy }`.
 
 ## Client Support
 

@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { Spec } from "@json-render/core";
 import { App } from "@modelcontextprotocol/ext-apps";
+import {
+  parseSpecFromToolResult,
+  type JsonRenderAppOptions,
+  type ToolResultContent,
+} from "./shared.js";
 
 /**
  * Options for the `useJsonRenderApp` hook.
  */
-export interface UseJsonRenderAppOptions {
-  /** App name shown during initialization. Defaults to `"json-render"`. */
-  name?: string;
-  /** App version. Defaults to `"1.0.0"`. */
-  version?: string;
-}
+export type UseJsonRenderAppOptions = JsonRenderAppOptions;
 
 /**
  * Return value of `useJsonRenderApp`.
@@ -36,29 +36,6 @@ export interface UseJsonRenderAppReturn {
     name: string,
     args?: Record<string, unknown>,
   ) => Promise<void>;
-}
-
-interface ToolResultContent {
-  type: string;
-  text?: string;
-}
-
-function parseSpecFromToolResult(result: {
-  content?: ToolResultContent[];
-}): Spec | null {
-  const textContent = result.content?.find(
-    (c: ToolResultContent) => c.type === "text",
-  );
-  if (!textContent?.text) return null;
-  try {
-    const parsed = JSON.parse(textContent.text);
-    if (parsed && typeof parsed === "object" && "spec" in parsed) {
-      return parsed.spec as Spec;
-    }
-    return parsed as Spec;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -92,8 +69,6 @@ export function useJsonRenderApp(
       }
     };
 
-    // Let the App class handle transport creation internally,
-    // matching the official MCP Apps quickstart pattern.
     app
       .connect()
       .then(() => {

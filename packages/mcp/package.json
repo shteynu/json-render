@@ -42,6 +42,21 @@
       "types": "./dist/app.d.ts",
       "import": "./dist/app.mjs",
       "require": "./dist/app.js"
+    },
+    "./app/react": {
+      "types": "./dist/app/react.d.ts",
+      "import": "./dist/app/react.mjs",
+      "require": "./dist/app/react.js"
+    },
+    "./app/vue": {
+      "types": "./dist/app/vue.d.ts",
+      "import": "./dist/app/vue.mjs",
+      "require": "./dist/app/vue.js"
+    },
+    "./app/svelte": {
+      "types": "./dist/app/svelte.d.ts",
+      "import": "./dist/app/svelte.mjs",
+      "require": "./dist/app/svelte.js"
     }
   },
   "files": [
@@ -60,18 +75,28 @@
   "devDependencies": {
     "@internal/typescript-config": "workspace:*",
     "@types/react": "19.2.3",
+    "svelte": "^5.0.0",
     "tsup": "^8.0.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vue": "^3.5.0"
   },
   "peerDependencies": {
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "svelte": "^5.0.0",
+    "vue": "^3.5.0"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   }

@@ -11,10 +11,17 @@ MCP Apps integration for json-render. Serve json-render UIs as interactive [MCP 
 npm install @json-render/mcp @json-render/core @modelcontextprotocol/sdk
 ```
 
-For the iframe-side React UI, also install:
+For the iframe-side UI, install the renderer for your framework:
 
 ```bash
+# React
 npm install @json-render/react react react-dom
+
+# Vue
+npm install @json-render/vue vue
+
+# Svelte
+npm install @json-render/svelte svelte
 ```
 
 See the [MCP example](https://github.com/vercel-labs/json-render/tree/main/examples/mcp) for a full working example.
@@ -117,16 +124,22 @@ registerJsonRenderResource(server, {
 });
 ```
 
-## Client API (`@json-render/mcp/app`)
+## Client API
 
-These exports run inside the sandboxed iframe rendered by the MCP host.
+These exports run inside the sandboxed iframe rendered by the MCP host. Framework-specific adapters are available at:
 
-### useJsonRenderApp
+- `@json-render/mcp/app/react` -- React hook
+- `@json-render/mcp/app/vue` -- Vue composable
+- `@json-render/mcp/app/svelte` -- Svelte stores
+
+The React hook is also re-exported from `@json-render/mcp/app` for backward compatibility.
+
+### React -- useJsonRenderApp (`@json-render/mcp/app/react`)
 
 React hook that connects to the MCP host, listens for tool results, and maintains the current json-render spec.
 
 ```tsx
-import { useJsonRenderApp } from "@json-render/mcp/app";
+import { useJsonRenderApp } from "@json-render/mcp/app/react";
 import { JSONUIProvider, Renderer } from "@json-render/react";
 
 function McpAppView({ registry }) {
@@ -146,7 +159,51 @@ function McpAppView({ registry }) {
 }
 ```
 
-#### UseJsonRenderAppReturn
+### Vue -- useJsonRenderApp (`@json-render/mcp/app/vue`)
+
+Vue composable with the same API shape. Values are Vue refs and computed properties.
+
+```vue
+<script setup>
+import { useJsonRenderApp } from "@json-render/mcp/app/vue";
+import { Renderer } from "@json-render/vue";
+
+const { spec, loading, error } = useJsonRenderApp({ name: "my-app" });
+</script>
+
+<template>
+  <div v-if="error">Error: {{ error.message }}</div>
+  <div v-else-if="!spec">Waiting...</div>
+  <Renderer v-else :spec="spec" :registry="registry" :loading="loading" />
+</template>
+```
+
+### Svelte -- createJsonRenderApp (`@json-render/mcp/app/svelte`)
+
+Creates a json-render MCP App client using Svelte stores. Call `destroy()` in `onDestroy` to clean up.
+
+```svelte
+<script>
+  import { createJsonRenderApp } from "@json-render/mcp/app/svelte";
+  import { Renderer } from "@json-render/svelte";
+  import { onDestroy } from "svelte";
+
+  const { spec, loading, error, destroy } = createJsonRenderApp({ name: "my-app" });
+  onDestroy(destroy);
+</script>
+
+{#if $error}
+  <div>Error: {$error.message}</div>
+{:else if !$spec}
+  <div>Waiting...</div>
+{:else}
+  <Renderer spec={$spec} {registry} loading={$loading} />
+{/if}
+```
+
+### Return values
+
+All three adapters return the same logical state:
 
 <table>
   <thead>
@@ -195,9 +252,11 @@ function McpAppView({ registry }) {
   </tbody>
 </table>
 
-### buildAppHtml
+In React, values are plain primitives. In Vue, they are `Ref`/`ShallowRef`/`ComputedRef`. In Svelte, they are readable stores (use `$` prefix to subscribe). The Svelte adapter also returns a `destroy` function for cleanup.
 
-Generate a self-contained HTML page from bundled JavaScript and CSS.
+### buildAppHtml (`@json-render/mcp/app`)
+
+Generate a self-contained HTML page from bundled JavaScript and CSS. Framework-agnostic.
 
 ```typescript
 import { buildAppHtml } from "@json-render/mcp/app";
