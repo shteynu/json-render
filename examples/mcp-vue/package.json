@@ -1,0 +1,27 @@
+{
+  "name": "example-mcp-vue",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "start": "tsx server.ts",
+    "start:stdio": "tsx server.ts --stdio"
+  },
+  "dependencies": {
+    "@json-render/core": "workspace:*",
+    "@json-render/mcp": "workspace:*",
+    "@json-render/vue": "workspace:*",
+    "@modelcontextprotocol/ext-apps": "^1.2.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "vue": "^3.5.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-singlefile": "^2.3.0"
+  }
+}

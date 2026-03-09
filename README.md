@@ -486,6 +486,7 @@ pnpm dev
 - Chat Example: run `pnpm dev` in `examples/chat`
 - Svelte Example: run `pnpm dev` in `examples/svelte` or `examples/svelte-chat`
 - Vue Example: run `pnpm dev` in `examples/vue`
+- MCP Vue Example: run `pnpm build && pnpm start:stdio` in `examples/mcp-vue`
 - Vite Renderers (React + Vue + Svelte): run `pnpm dev` in `examples/vite-renderers`
 - React Native example: run `npx expo start` in `examples/react-native`
 

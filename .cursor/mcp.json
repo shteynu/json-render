@@ -1,8 +1,16 @@
 {
   "mcpServers": {
-    "json-render": {
+    "json-render-react": {
       "command": "npx",
       "args": ["tsx", "examples/mcp/server.ts", "--stdio"]
+    },
+    "json-render-vue": {
+      "command": "npx",
+      "args": ["tsx", "examples/mcp-vue/server.ts", "--stdio"]
+    },
+    "json-render-svelte": {
+      "command": "npx",
+      "args": ["tsx", "examples/mcp-svelte/server.ts", "--stdio"]
     }
   }
 }
