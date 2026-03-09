@@ -2,7 +2,7 @@
   "mcpServers": {
     "json-render-react": {
       "command": "npx",
-      "args": ["tsx", "examples/mcp/server.ts", "--stdio"]
+      "args": ["tsx", "examples/mcp-react/server.ts", "--stdio"]
     },
     "json-render-vue": {
       "command": "npx",

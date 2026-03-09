@@ -3,7 +3,7 @@
     "json-render": {
       "type": "stdio",
       "command": "npx",
-      "args": ["tsx", "examples/mcp/server.ts", "--stdio"]
+      "args": ["tsx", "examples/mcp-react/server.ts", "--stdio"]
     }
   }
 }

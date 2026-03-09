@@ -98,7 +98,7 @@ export const docsNavigation: NavSection[] = [
       },
       {
         title: "MCP App",
-        href: "https://github.com/vercel-labs/json-render/tree/main/examples/mcp",
+        href: "https://github.com/vercel-labs/json-render/tree/main/examples/mcp-react",
         external: true,
       },
     ],

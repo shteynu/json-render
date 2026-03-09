@@ -8,8 +8,8 @@ export const components: Components<AppCatalog> = {
     return h(
       "div",
       {
+        class: "flex",
         style: {
-          display: "flex",
           flexDirection: horizontal ? "row" : "column",
           gap: props.gap ? `${props.gap}px` : undefined,
           padding: props.padding ? `${props.padding}px` : undefined,
@@ -24,23 +24,15 @@ export const components: Components<AppCatalog> = {
     h(
       "div",
       {
-        style: {
-          borderRadius: "12px",
-          border: "1px solid #e5e7eb",
-          padding: "20px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        },
+        class:
+          "rounded-xl border border-border bg-card text-card-foreground p-5 shadow-sm",
       },
       [
         props.title &&
           h(
             "h2",
             {
-              style: {
-                fontSize: "16px",
-                fontWeight: "600",
-                margin: "0 0 4px 0",
-              },
+              class: "text-base font-semibold text-card-foreground mb-1",
             },
             props.title,
           ),
@@ -48,11 +40,7 @@ export const components: Components<AppCatalog> = {
           h(
             "p",
             {
-              style: {
-                fontSize: "13px",
-                color: "#6b7280",
-                margin: "0 0 12px 0",
-              },
+              class: "text-sm text-muted-foreground mb-3",
             },
             props.subtitle,
           ),
@@ -61,75 +49,67 @@ export const components: Components<AppCatalog> = {
     ),
 
   Text: ({ props }) => {
-    const sizeMap: Record<string, string> = {
-      sm: "12px",
-      md: "14px",
-      lg: "16px",
-      xl: "24px",
+    const sizeClasses: Record<string, string> = {
+      sm: "text-xs",
+      md: "text-sm",
+      lg: "text-base",
+      xl: "text-2xl",
     };
-    const weightMap: Record<string, string> = {
-      normal: "400",
-      medium: "500",
-      bold: "700",
+    const weightClasses: Record<string, string> = {
+      normal: "font-normal",
+      medium: "font-medium",
+      bold: "font-bold",
     };
     return h(
       "span",
       {
-        style: {
-          fontSize: sizeMap[props.size ?? "md"] ?? "14px",
-          fontWeight: weightMap[props.weight ?? "normal"] ?? "400",
-          color: props.color ?? "inherit",
-        },
+        class: [
+          sizeClasses[props.size ?? "md"] ?? "text-sm",
+          weightClasses[props.weight ?? "normal"] ?? "font-normal",
+          "text-foreground",
+        ].join(" "),
+        style: props.color ? { color: props.color } : undefined,
       },
       String(props.content ?? ""),
     );
   },
 
-  Button: ({ props, emit }) =>
-    h(
+  Button: ({ props, emit }) => {
+    const variant = props.variant ?? "primary";
+    const variantClasses: Record<string, string> = {
+      primary: "bg-primary text-primary-foreground hover:bg-primary/90",
+      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+      danger:
+        "bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20",
+    };
+    return h(
       "button",
       {
         disabled: props.disabled,
         onClick: () => emit("press"),
-        style: {
-          padding: "8px 16px",
-          borderRadius: "8px",
-          border: "none",
-          cursor: props.disabled ? "not-allowed" : "pointer",
-          fontWeight: "500",
-          fontSize: "14px",
-          opacity: props.disabled ? "0.5" : "1",
-          backgroundColor:
-            props.variant === "danger"
-              ? "#fee2e2"
-              : props.variant === "secondary"
-                ? "#f3f4f6"
-                : "#3b82f6",
-          color:
-            props.variant === "danger"
-              ? "#dc2626"
-              : props.variant === "secondary"
-                ? "#374151"
-                : "white",
-        },
+        class: [
+          "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+          variantClasses[variant] ?? variantClasses.primary,
+          props.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+        ].join(" "),
       },
       props.label,
-    ),
+    );
+  },
 
   Badge: ({ props }) =>
     h(
       "span",
       {
-        style: {
-          display: "inline-block",
-          padding: "4px 12px",
-          borderRadius: "999px",
-          fontSize: "13px",
-          fontWeight: "500",
-          backgroundColor: props.color ? `${props.color}20` : "#e0f2fe",
-          color: props.color ?? "#0369a1",
-          border: `1px solid ${props.color ? `${props.color}40` : "#bae6fd"}`,
-        },
+        class:
+          "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-secondary text-secondary-foreground border border-border",
+        style: props.color
+          ? {
+              backgroundColor: `${props.color}20`,
+              color: props.color,
+              borderColor: `${props.color}40`,
+            }
+          : undefined,
       },
       props.label,
     ),

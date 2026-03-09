@@ -16,19 +16,17 @@
 </script>
 
 <div
-  style="
-    display: flex;
-    flex-direction: {horizontal ? 'row' : 'column'};
-    gap: {props.gap ?? 0}px;
-    padding: {props.padding ?? 0}px;
-    align-items: {props.align === 'start'
-    ? 'flex-start'
-    : props.align === 'end'
-      ? 'flex-end'
+  class="flex"
+  style:flex-direction={horizontal ? "row" : "column"}
+  style:gap="{props.gap ?? 0}px"
+  style:padding="{props.padding ?? 0}px"
+  style:align-items={props.align === "start"
+    ? "flex-start"
+    : props.align === "end"
+      ? "flex-end"
       : horizontal
-        ? 'center'
-        : 'stretch'};
-  ">
+        ? "center"
+        : "stretch"}>
   {#if children}
     {@render children()}
   {/if}

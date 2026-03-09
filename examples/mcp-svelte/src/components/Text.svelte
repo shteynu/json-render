@@ -10,25 +10,22 @@
 
   let { props }: Props = $props();
 
-  const sizeMap: Record<string, string> = {
-    sm: "12px",
-    md: "14px",
-    lg: "16px",
-    xl: "24px",
+  const sizeClasses: Record<string, string> = {
+    sm: "text-xs",
+    md: "text-sm",
+    lg: "text-base",
+    xl: "text-2xl",
   };
 
-  const weightMap: Record<string, string> = {
-    normal: "400",
-    medium: "500",
-    bold: "700",
+  const weightClasses: Record<string, string> = {
+    normal: "font-normal",
+    medium: "font-medium",
+    bold: "font-bold",
   };
 </script>
 
 <span
-  style="
-    font-size: {sizeMap[props.size ?? 'md'] ?? '14px'};
-    font-weight: {weightMap[props.weight ?? 'normal'] ?? '400'};
-    color: {props.color ?? 'inherit'};
-  ">
+  class="{sizeClasses[props.size ?? 'md'] ?? 'text-sm'} {weightClasses[props.weight ?? 'normal'] ?? 'font-normal'} text-foreground"
+  style:color={props.color ?? undefined}>
   {String(props.content ?? "")}
 </span>

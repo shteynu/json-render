@@ -6,17 +6,23 @@ import { components } from "./registry";
 
 const { registry } = defineRegistry(catalog, { components });
 
-const { spec, loading, connected, connecting, error } = useJsonRenderApp({
+const { spec, loading, connecting, error } = useJsonRenderApp({
   name: "json-render-mcp-vue",
   version: "1.0.0",
 });
 </script>
 
 <template>
-  <div v-if="error" style="padding: 16px; color: #dc2626; font-family: monospace; font-size: 13px">
+  <div
+    v-if="error"
+    class="p-4 font-mono text-sm text-destructive"
+  >
     {{ error.message }}
   </div>
-  <div v-else-if="!spec" style="padding: 16px; color: #6b7280; font-family: sans-serif; font-size: 14px">
+  <div
+    v-else-if="!spec"
+    class="p-4 text-sm text-muted-foreground"
+  >
     {{ connecting ? "Connecting to host..." : "Waiting for UI spec..." }}
   </div>
   <JSONUIProvider v-else :registry="registry" :initialState="spec.state ?? {}">

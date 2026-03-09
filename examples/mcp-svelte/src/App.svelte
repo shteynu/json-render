@@ -12,11 +12,11 @@
 </script>
 
 {#if $error}
-  <div style="padding: 16px; color: #dc2626; font-family: monospace; font-size: 13px">
+  <div class="p-4 text-destructive font-mono text-sm">
     {$error.message}
   </div>
 {:else if !$spec}
-  <div style="padding: 16px; color: #6b7280; font-family: sans-serif; font-size: 14px">
+  <div class="p-4 text-muted-foreground text-sm">
     {$connecting ? "Connecting to host..." : "Waiting for UI spec..."}
   </div>
 {:else}

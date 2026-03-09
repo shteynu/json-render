@@ -20,7 +20,7 @@ Add to `.cursor/mcp.json`:
   "mcpServers": {
     "json-render": {
       "command": "npx",
-      "args": ["tsx", "examples/mcp/server.ts", "--stdio"]
+      "args": ["tsx", "examples/mcp-react/server.ts", "--stdio"]
     }
   }
 }
@@ -35,7 +35,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "json-render": {
       "command": "npx",
-      "args": ["tsx", "/absolute/path/to/examples/mcp/server.ts", "--stdio"]
+      "args": ["tsx", "/absolute/path/to/examples/mcp-react/server.ts", "--stdio"]
     }
   }
 }
