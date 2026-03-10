@@ -92,13 +92,29 @@ export interface Catalog<
   /** Generate system prompt for AI */
   prompt(options?: PromptOptions): string;
   /** Export as JSON Schema for structured outputs */
-  jsonSchema(): object;
+  jsonSchema(options?: JsonSchemaOptions): object;
   /** Validate a spec against this catalog */
   validate(spec: unknown): SpecValidationResult<InferSpec<TDef, TCatalog>>;
   /** Get the Zod schema for the spec */
   zodSchema(): z.ZodType<InferSpec<TDef, TCatalog>>;
   /** Type helper for the spec type */
   readonly _specType: InferSpec<TDef, TCatalog>;
+}
+
+/**
+ * Options for JSON Schema export
+ */
+export interface JsonSchemaOptions {
+  /**
+   * When true, produces a strict JSON Schema subset compatible with
+   * LLM structured output APIs (OpenAI, Google Gemini, Anthropic, etc.).
+   * This ensures:
+   * - `additionalProperties: false` on every object
+   * - No `propertyNames` keyword
+   * - All object properties listed in `required` (optionals use nullable types)
+   * - Record types converted to fixed-key objects
+   */
+  strict?: boolean;
 }
 
 /**
@@ -411,8 +427,8 @@ function createCatalogFromSchema<TDef extends SchemaDefinition, TCatalog>(
       return generatePrompt(this, options);
     },
 
-    jsonSchema(): object {
-      return zodToJsonSchema(zodSchema);
+    jsonSchema(options: JsonSchemaOptions = {}): object {
+      return zodToJsonSchema(zodSchema, options.strict ?? false);
     },
 
     validate(spec: unknown): SpecValidationResult<InferSpec<TDef, TCatalog>> {
@@ -1303,44 +1319,106 @@ function formatZodType(schema: z.ZodType): string {
 }
 
 /**
- * Convert Zod schema to JSON Schema
+ * Resolve the Zod type name from a schema's internal definition.
+ * Supports both Zod 3 (`_def.typeName`) and Zod 4 (`_def.type`).
  */
-function zodToJsonSchema(schema: z.ZodType): object {
-  // Simplified JSON Schema conversion
-  const def = schema._def as unknown as Record<string, unknown>;
-  const typeName = (def.typeName as string) ?? "";
+function zodTypeName(def: Record<string, unknown>): string {
+  // Zod 4 uses _def.type as a plain string (e.g. "string", "object")
+  if (typeof def.type === "string") return def.type;
+  // Zod 3 uses _def.typeName (e.g. "ZodString", "ZodObject")
+  if (typeof def.typeName === "string") return def.typeName;
+  return "";
+}
 
-  switch (typeName) {
-    case "ZodString":
+/**
+ * Normalise a Zod type name to a canonical lowercase form.
+ * Handles both Zod 3 ("ZodString") and Zod 4 ("string") conventions.
+ */
+function normalizeTypeName(raw: string): string {
+  // Zod 3 names start with "Zod", e.g. "ZodString" → "string"
+  if (raw.startsWith("Zod")) {
+    return raw.slice(3).toLowerCase();
+  }
+  return raw.toLowerCase();
+}
+
+/**
+ * Convert Zod schema to JSON Schema.
+ *
+ * When `strict` is true the output conforms to the JSON Schema subset required
+ * by LLM structured output APIs (no `propertyNames`, `additionalProperties: false`
+ * everywhere, all properties listed in `required`).
+ */
+function zodToJsonSchema(schema: z.ZodType, strict = false): object {
+  const def = schema._def as unknown as Record<string, unknown>;
+  const kind = normalizeTypeName(zodTypeName(def));
+
+  switch (kind) {
+    case "string":
       return { type: "string" };
-    case "ZodNumber":
+    case "number":
       return { type: "number" };
-    case "ZodBoolean":
+    case "boolean":
       return { type: "boolean" };
-    case "ZodLiteral":
-      return { const: def.value };
-    case "ZodEnum":
-      return { enum: def.values };
-    case "ZodArray": {
-      const inner = def.type as z.ZodType | undefined;
+    case "literal": {
+      // Zod 4: _def.values (array), Zod 3: _def.value (single)
+      const values = def.values as unknown[] | undefined;
+      const value = values ? values[0] : def.value;
+      return { const: value };
+    }
+    case "enum": {
+      // Zod 4: _def.entries (object { a:"a", b:"b" }), Zod 3: _def.values (string[])
+      const entries = def.entries as Record<string, string> | undefined;
+      const values = entries
+        ? Object.values(entries)
+        : (def.values as string[] | undefined);
+      return { enum: values ?? [] };
+    }
+    case "array": {
+      // Zod 4: _def.element, Zod 3: _def.type
+      const inner = (def.element ?? def.type) as z.ZodType | undefined;
       return {
         type: "array",
-        items: inner ? zodToJsonSchema(inner) : {},
+        items: inner ? zodToJsonSchema(inner, strict) : {},
       };
     }
-    case "ZodObject": {
-      const shape = (def.shape as () => Record<string, z.ZodType>)?.();
-      if (!shape) return { type: "object" };
+    case "object": {
+      // Zod 4: _def.shape is an object, Zod 3: _def.shape is a function
+      const rawShape = def.shape;
+      const shape: Record<string, z.ZodType> | undefined =
+        typeof rawShape === "function"
+          ? (rawShape as () => Record<string, z.ZodType>)()
+          : (rawShape as Record<string, z.ZodType> | undefined);
+
+      if (!shape) {
+        if (strict) {
+          return { type: "object", properties: {}, required: [], additionalProperties: false };
+        }
+        return { type: "object" };
+      }
+
       const properties: Record<string, object> = {};
       const required: string[] = [];
       for (const [key, value] of Object.entries(shape)) {
-        properties[key] = zodToJsonSchema(value);
         const innerDef = value._def as unknown as Record<string, unknown>;
-        if (
-          innerDef.typeName !== "ZodOptional" &&
-          innerDef.typeName !== "ZodNullable"
-        ) {
+        const innerKind = normalizeTypeName(zodTypeName(innerDef));
+        const isOptional = innerKind === "optional" || innerKind === "nullable";
+
+        if (strict) {
+          // In strict mode, all properties must be in required.
+          // Optional properties are represented as nullable types.
           required.push(key);
+          if (isOptional) {
+            const unwrapped = zodToJsonSchema(value, strict);
+            properties[key] = { anyOf: [unwrapped, { type: "null" }] };
+          } else {
+            properties[key] = zodToJsonSchema(value, strict);
+          }
+        } else {
+          properties[key] = zodToJsonSchema(value);
+          if (!isOptional) {
+            required.push(key);
+          }
         }
       }
       return {
@@ -1350,23 +1428,37 @@ function zodToJsonSchema(schema: z.ZodType): object {
         additionalProperties: false,
       };
     }
-    case "ZodRecord": {
+    case "record": {
       const valueType = def.valueType as z.ZodType | undefined;
+      if (strict) {
+        // Strict mode does not allow additionalProperties with a schema value.
+        // Emit a permissive object with no fixed properties.
+        return {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: false,
+        };
+      }
       return {
         type: "object",
         additionalProperties: valueType ? zodToJsonSchema(valueType) : true,
       };
     }
-    case "ZodOptional":
-    case "ZodNullable": {
+    case "optional":
+    case "nullable": {
       const inner = def.innerType as z.ZodType | undefined;
-      return inner ? zodToJsonSchema(inner) : {};
+      return inner ? zodToJsonSchema(inner, strict) : {};
     }
-    case "ZodUnion": {
+    case "union": {
       const options = def.options as z.ZodType[] | undefined;
-      return options ? { anyOf: options.map(zodToJsonSchema) } : {};
+      return options ? { anyOf: options.map((o) => zodToJsonSchema(o, strict)) } : {};
     }
-    case "ZodAny":
+    case "any":
+    case "unknown":
+      if (strict) {
+        return { type: "object", properties: {}, required: [], additionalProperties: false };
+      }
       return {};
     default:
       return {};
