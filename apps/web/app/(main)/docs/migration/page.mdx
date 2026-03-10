@@ -313,6 +313,31 @@ const prompt = catalog.prompt();
 const inlinePrompt = catalog.prompt({ mode: "inline" });
 ```
 
+## Generation Modes
+
+The generation mode values passed to `catalog.prompt()` have been renamed for clarity:
+
+- `"generate"` is now `"standalone"`
+- `"chat"` is now `"inline"`
+
+The old names are accepted as deprecated aliases, so existing code will continue to work. Update when convenient.
+
+**Before:**
+
+```typescript
+const prompt = catalog.prompt({ mode: "generate" });
+const chatPrompt = catalog.prompt({ mode: "chat" });
+```
+
+**After:**
+
+```typescript
+const prompt = catalog.prompt({ mode: "standalone" });
+const inlinePrompt = catalog.prompt({ mode: "inline" });
+```
+
+The default mode (when no `mode` option is provided) is `"standalone"`, which behaves identically to the previous `"generate"` default.
+
 ## Validation
 
 `ValidationCheck` now uses `type` instead of `fn`, `ValidationProvider` uses `customFunctions` instead of `functions`, and `useFieldValidation` takes a config object instead of a checks array.

@@ -565,15 +565,22 @@ function generatePrompt<TDef extends SchemaDefinition, TCatalog>(
   const {
     system = "You are a UI generator that outputs JSON.",
     customRules = [],
-    mode = "standalone",
+    mode: rawMode = "standalone",
   } = options;
+
+  const mode: "standalone" | "inline" =
+    rawMode === "chat"
+      ? "inline"
+      : rawMode === "generate"
+        ? "standalone"
+        : rawMode;
 
   const lines: string[] = [];
   lines.push(system);
   lines.push("");
 
   // Output format section - explain JSONL streaming patch format
-  if (mode === "inline" || mode === "chat") {
+  if (mode === "inline") {
     lines.push("OUTPUT FORMAT (text + JSONL, RFC 6902 JSON Patch):");
     lines.push(
       "You respond conversationally. When generating UI, first write a brief explanation (1-3 sentences), then output JSONL patch lines wrapped in a ```spec code fence.",
@@ -1016,7 +1023,7 @@ Note: state patches appear right after the elements that use them, so the UI fil
   // Rules
   lines.push("RULES:");
   const baseRules =
-    mode === "inline" || mode === "chat"
+    mode === "inline"
       ? [
           "When generating UI, wrap all JSONL patches in a ```spec code fence - one JSON object per line inside the fence",
           "Write a brief conversational response before any JSONL output",
