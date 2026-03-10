@@ -257,7 +257,7 @@ describe("catalog.prompt", () => {
     expect(prompt).toContain("Keep UIs simple");
   });
 
-  it("generates chat mode prompt when mode is chat", () => {
+  it("generates inline mode prompt when mode is inline", () => {
     const catalog = defineCatalog(testSchema, {
       components: {
         Text: {
@@ -268,13 +268,13 @@ describe("catalog.prompt", () => {
       },
       actions: {},
     });
-    const prompt = catalog.prompt({ mode: "chat" });
+    const prompt = catalog.prompt({ mode: "inline" });
     expect(prompt).toContain("```spec");
     expect(prompt).toContain("conversationally");
     expect(prompt).toContain("text + JSONL");
   });
 
-  it("generates generate mode prompt by default", () => {
+  it("generates standalone mode prompt by default", () => {
     const catalog = defineCatalog(testSchema, {
       components: {
         Text: {
@@ -288,6 +288,38 @@ describe("catalog.prompt", () => {
     const prompt = catalog.prompt();
     expect(prompt).toContain("Output ONLY JSONL patches");
     expect(prompt).not.toContain("conversationally");
+  });
+
+  it("accepts deprecated 'chat' as alias for 'inline'", () => {
+    const catalog = defineCatalog(testSchema, {
+      components: {
+        Text: {
+          props: z.object({}),
+          description: "",
+          slots: [],
+        },
+      },
+      actions: {},
+    });
+    const inlinePrompt = catalog.prompt({ mode: "inline" });
+    const chatPrompt = catalog.prompt({ mode: "chat" });
+    expect(chatPrompt).toEqual(inlinePrompt);
+  });
+
+  it("accepts deprecated 'generate' as alias for 'standalone'", () => {
+    const catalog = defineCatalog(testSchema, {
+      components: {
+        Text: {
+          props: z.object({}),
+          description: "",
+          slots: [],
+        },
+      },
+      actions: {},
+    });
+    const standalonePrompt = catalog.prompt({ mode: "standalone" });
+    const generatePrompt = catalog.prompt({ mode: "generate" });
+    expect(generatePrompt).toEqual(standalonePrompt);
   });
 
   it("uses actual catalog component names in examples", () => {

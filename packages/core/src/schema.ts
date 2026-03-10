@@ -112,11 +112,13 @@ export interface PromptOptions {
   /**
    * Output mode for the generated prompt.
    *
-   * - `"generate"` (default): The LLM should output only JSONL patches (no prose).
-   * - `"chat"`: The LLM should respond conversationally first, then output JSONL patches.
+   * - `"standalone"` (default): The LLM should output only JSONL patches (no prose).
+   * - `"inline"`: The LLM should respond conversationally first, then output JSONL patches.
    *   Includes rules about interleaving text with JSONL and not wrapping in code fences.
+   *
+   * `"generate"` and `"chat"` are accepted as deprecated aliases for `"standalone"` and `"inline"`.
    */
-  mode?: "generate" | "chat";
+  mode?: "standalone" | "inline" | "generate" | "chat";
 }
 
 /**
@@ -563,7 +565,7 @@ function generatePrompt<TDef extends SchemaDefinition, TCatalog>(
   const {
     system = "You are a UI generator that outputs JSON.",
     customRules = [],
-    mode = "generate",
+    mode = "standalone",
   } = options;
 
   const lines: string[] = [];
@@ -571,7 +573,7 @@ function generatePrompt<TDef extends SchemaDefinition, TCatalog>(
   lines.push("");
 
   // Output format section - explain JSONL streaming patch format
-  if (mode === "chat") {
+  if (mode === "inline" || mode === "chat") {
     lines.push("OUTPUT FORMAT (text + JSONL, RFC 6902 JSON Patch):");
     lines.push(
       "You respond conversationally. When generating UI, first write a brief explanation (1-3 sentences), then output JSONL patch lines wrapped in a ```spec code fence.",
@@ -1014,7 +1016,7 @@ Note: state patches appear right after the elements that use them, so the UI fil
   // Rules
   lines.push("RULES:");
   const baseRules =
-    mode === "chat"
+    mode === "inline" || mode === "chat"
       ? [
           "When generating UI, wrap all JSONL patches in a ```spec code fence - one JSON object per line inside the fence",
           "Write a brief conversational response before any JSONL output",

@@ -23,7 +23,7 @@ function ChatModeDiagram() {
   return (
     <div className="flex flex-col h-full">
       <div className="text-xs font-medium text-muted-foreground mb-3 text-center">
-        Chat Mode
+        Inline Mode
       </div>
       <div className="flex-1 border border-border rounded-lg bg-background overflow-hidden flex flex-col">
         {/* Chat area */}
@@ -73,7 +73,7 @@ function GenerateModeDiagram() {
   return (
     <div className="flex flex-col h-full">
       <div className="text-xs font-medium text-muted-foreground mb-3 text-center">
-        Generate Mode
+        Standalone Mode
       </div>
       <div className="flex-1 border border-border rounded-lg bg-background overflow-hidden flex flex-row">
         {/* Left panel - prompt */}
