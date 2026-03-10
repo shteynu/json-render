@@ -1,5 +1,20 @@
 # @json-render/mcp
 
+## 0.12.1
+
+### Patch Changes
+
+- Rename generation modes and fix MCP React duplicate module error.
+
+  ### Changed:
+  - **`@json-render/core`** — Renamed generation modes: `"generate"` is now `"standalone"`, `"chat"` is now `"inline"`. The old names are still accepted but emit a deprecation warning.
+
+  ### Fixed:
+  - **`@json-render/mcp`** — Resolved React duplicate module error by adding Vite dedupe config. Added new `@json-render/mcp/build-app-html` server-safe entry point for building self-contained MCP App HTML without importing React.
+
+- Updated dependencies
+  - @json-render/core@0.12.1
+
 ## 0.12.0
 
 ### Minor Changes

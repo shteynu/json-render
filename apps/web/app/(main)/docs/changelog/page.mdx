@@ -5,6 +5,29 @@ export const metadata = pageMetadata("docs/changelog")
 
 Notable changes and updates to json-render.
 
+## v0.12.1
+
+March 2026
+
+### Changed: Generation Mode Names
+
+The generation mode values passed to `catalog.prompt()` have been renamed for clarity:
+
+- `"generate"` is now `"standalone"`
+- `"chat"` is now `"inline"`
+
+The old names are accepted as deprecated aliases and will emit a console warning. See the [Migration Guide](/docs/migration#generation-modes) for details.
+
+### Fixed: MCP React Duplicate Module Error
+
+Resolved a React duplicate module error in `@json-render/mcp` by adding Vite dedupe configuration. Also added a new `@json-render/mcp/build-app-html` server-safe entry point for building self-contained MCP App HTML without importing React.
+
+### Improved: Skill Names
+
+Skills have been renamed from `json-render-*` to shorter names (e.g. `json-render-react` → `react`, `json-render-core` → `core`).
+
+---
+
 ## v0.10.0
 
 February 2026
