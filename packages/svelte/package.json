@@ -21,7 +21,7 @@
     "url": "git+https://github.com/vercel-labs/json-render.git",
     "directory": "packages/svelte"
   },
-  "homepage": "https://github.com/vercel-labs/json-render#readme",
+  "homepage": "https://json-render.dev",
   "bugs": {
     "url": "https://github.com/vercel-labs/json-render/issues"
   },
