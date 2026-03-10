@@ -116,7 +116,8 @@ export interface PromptOptions {
    * - `"inline"`: The LLM should respond conversationally first, then output JSONL patches.
    *   Includes rules about interleaving text with JSONL and not wrapping in code fences.
    *
-   * `"generate"` and `"chat"` are accepted as deprecated aliases for `"standalone"` and `"inline"`.
+   * @deprecated `"generate"` — use `"standalone"` instead.
+   * @deprecated `"chat"` — use `"inline"` instead.
    */
   mode?: "standalone" | "inline" | "generate" | "chat";
 }
@@ -570,9 +571,15 @@ function generatePrompt<TDef extends SchemaDefinition, TCatalog>(
 
   const mode: "standalone" | "inline" =
     rawMode === "chat"
-      ? "inline"
+      ? (console.warn(
+          '[json-render] mode "chat" is deprecated, use "inline" instead',
+        ),
+        "inline")
       : rawMode === "generate"
-        ? "standalone"
+        ? (console.warn(
+            '[json-render] mode "generate" is deprecated, use "standalone" instead',
+          ),
+          "standalone")
         : rawMode;
 
   const lines: string[] = [];
