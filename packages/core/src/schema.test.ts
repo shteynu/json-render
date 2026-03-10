@@ -675,6 +675,63 @@ describe("catalog.jsonSchema", () => {
       expect(noAdditionalPropertiesSchema(schema)).toBe(true);
     });
 
+    it("wraps optional properties with anyOf nullable", () => {
+      // Use a schema where propsOf resolves to a single component's props
+      // (no record wrapper around the props) so the optional anyOf handling
+      // is directly visible in the JSON Schema output.
+      const flatSchema = defineSchema((s) => ({
+        spec: s.object({
+          component: s.object({
+            type: s.ref("catalog.components"),
+            props: s.propsOf("catalog.components"),
+          }),
+        }),
+        catalog: s.object({
+          components: s.map({
+            props: s.zod(),
+            description: s.string(),
+          }),
+        }),
+      }));
+
+      const catalog = defineCatalog(flatSchema, {
+        components: {
+          Card: {
+            props: z.object({
+              heading: z.string(),
+              caption: z.string().optional(),
+            }),
+            description: "",
+          },
+        },
+      });
+
+      const schema = catalog.jsonSchema({ strict: true }) as {
+        properties: {
+          component: {
+            properties: { props: Record<string, unknown> };
+          };
+        };
+      };
+
+      const propsSchema = schema.properties.component.properties.props;
+
+      // caption is optional – in strict mode it must be in `required`
+      // and wrapped in anyOf with null
+      const captionSchema = (
+        propsSchema as {
+          properties: { caption: Record<string, unknown> };
+        }
+      ).properties.caption;
+      expect(captionSchema).toEqual({
+        anyOf: [{ type: "string" }, { type: "null" }],
+      });
+
+      const propsRequired = (propsSchema as { required: string[] }).required;
+      expect(propsRequired).toContain("heading");
+      expect(propsRequired).toContain("caption");
+    });
+
     it("does not affect default (non-strict) output", () => {
       const catalog = defineCatalog(testSchema, {
         components: {

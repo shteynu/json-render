@@ -110,9 +110,15 @@ export interface JsonSchemaOptions {
    * LLM structured output APIs (OpenAI, Google Gemini, Anthropic, etc.).
    * This ensures:
    * - `additionalProperties: false` on every object
-   * - No `propertyNames` keyword
    * - All object properties listed in `required` (optionals use nullable types)
-   * - Record types converted to fixed-key objects
+   * - Record/map types converted to fixed-key objects
+   *
+   * **Limitation:** Record types (dynamic-key maps) cannot be represented in
+   * strict JSON Schema because `additionalProperties` must be `false`. They
+   * are emitted as `{ type: "object", properties: {}, additionalProperties: false }`.
+   * The LLM prompt (via `catalog.prompt()`) still describes the full structure,
+   * so the model can produce valid output even though the JSON Schema for
+   * record entries is opaque.
    */
   strict?: boolean;
 }
@@ -1392,7 +1398,12 @@ function zodToJsonSchema(schema: z.ZodType, strict = false): object {
 
       if (!shape) {
         if (strict) {
-          return { type: "object", properties: {}, required: [], additionalProperties: false };
+          return {
+            type: "object",
+            properties: {},
+            required: [],
+            additionalProperties: false,
+          };
         }
         return { type: "object" };
       }
@@ -1431,8 +1442,11 @@ function zodToJsonSchema(schema: z.ZodType, strict = false): object {
     case "record": {
       const valueType = def.valueType as z.ZodType | undefined;
       if (strict) {
-        // Strict mode does not allow additionalProperties with a schema value.
-        // Emit a permissive object with no fixed properties.
+        // LLM strict schemas require `additionalProperties: false` and do not
+        // permit a schema value for `additionalProperties`. Since record types
+        // have dynamic keys that cannot be enumerated at schema-generation time,
+        // we emit an opaque object. The LLM prompt still describes the expected
+        // structure so the model can produce valid output.
         return {
           type: "object",
           properties: {},
@@ -1452,12 +1466,19 @@ function zodToJsonSchema(schema: z.ZodType, strict = false): object {
     }
     case "union": {
       const options = def.options as z.ZodType[] | undefined;
-      return options ? { anyOf: options.map((o) => zodToJsonSchema(o, strict)) } : {};
+      return options
+        ? { anyOf: options.map((o) => zodToJsonSchema(o, strict)) }
+        : {};
     }
     case "any":
     case "unknown":
       if (strict) {
-        return { type: "object", properties: {}, required: [], additionalProperties: false };
+        return {
+          type: "object",
+          properties: {},
+          required: [],
+          additionalProperties: false,
+        };
       }
       return {};
     default:
