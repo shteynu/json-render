@@ -72,4 +72,4 @@ const { registry } = defineRegistry(catalog, {
 
 ## Docs
 
-Full API reference: [json-render.dev/docs/api/three](https://json-render.dev/docs/api/three)
+Full API reference: [json-render.dev/docs/api/react-three-fiber](https://json-render.dev/docs/api/react-three-fiber)
