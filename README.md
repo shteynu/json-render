@@ -121,6 +121,7 @@ function Dashboard({ spec }) {
 | `@json-render/svelte`       | Svelte 5 renderer with runes-based reactivity                          |
 | `@json-render/solid`        | SolidJS renderer with fine-grained reactive contexts                   |
 | `@json-render/shadcn`       | 36 pre-built shadcn/ui components (Radix UI + Tailwind CSS)            |
+| `@json-render/react-three-fiber` | React Three Fiber renderer for 3D scenes (19 built-in components)  |
 | `@json-render/react-native` | React Native renderer with standard mobile components                  |
 | `@json-render/remotion`     | Remotion video renderer, timeline schema                               |
 | `@json-render/react-pdf`    | React PDF renderer for generating PDF documents from specs             |
@@ -432,6 +433,47 @@ const png = await renderToPng(spec, { fonts });
 // Or render to SVG string
 import { renderToSvg } from "@json-render/image/render";
 const svg = await renderToSvg(spec, { fonts });
+```
+
+### Three.js (3D)
+
+```tsx
+import { defineCatalog } from "@json-render/core";
+import { schema, defineRegistry } from "@json-render/react";
+import {
+  threeComponentDefinitions,
+  threeComponents,
+  ThreeCanvas,
+} from "@json-render/react-three-fiber";
+
+const catalog = defineCatalog(schema, {
+  components: {
+    Box: threeComponentDefinitions.Box,
+    Sphere: threeComponentDefinitions.Sphere,
+    AmbientLight: threeComponentDefinitions.AmbientLight,
+    DirectionalLight: threeComponentDefinitions.DirectionalLight,
+    OrbitControls: threeComponentDefinitions.OrbitControls,
+  },
+  actions: {},
+});
+
+const { registry } = defineRegistry(catalog, {
+  components: {
+    Box: threeComponents.Box,
+    Sphere: threeComponents.Sphere,
+    AmbientLight: threeComponents.AmbientLight,
+    DirectionalLight: threeComponents.DirectionalLight,
+    OrbitControls: threeComponents.OrbitControls,
+  },
+});
+
+<ThreeCanvas
+  spec={spec}
+  registry={registry}
+  shadows
+  camera={{ position: [5, 5, 5], fov: 50 }}
+  style={{ width: "100%", height: "100vh" }}
+/>;
 ```
 
 ## Features
