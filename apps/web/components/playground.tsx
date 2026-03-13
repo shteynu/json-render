@@ -2,10 +2,16 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { flushSync } from "react-dom";
-import { useUIStream, type TokenUsage } from "@json-render/react";
 import type { Spec } from "@json-render/core";
 import { collectUsedComponents, serializeProps } from "@json-render/codegen";
 import { toast } from "sonner";
+import { stringify as yamlStringify } from "yaml";
+import type { EditMode } from "@json-render/core";
+import {
+  usePlaygroundStream,
+  type StreamFormat,
+  type TokenUsage,
+} from "@/lib/use-playground-stream";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -22,10 +28,10 @@ import { PlaygroundRenderer } from "@/lib/render/renderer";
 import { playgroundCatalog } from "@/lib/render/catalog";
 import { buildCatalogDisplayData } from "@/lib/render/catalog-display";
 
-type Tab = "json" | "nested" | "stream" | "catalog" | "visual";
+type Tab = "spec" | "nested" | "stream" | "catalog" | "visual";
 type RenderView = "preview" | "code";
 type MobileView =
-  | "json"
+  | "spec"
   | "nested"
   | "stream"
   | "catalog"
@@ -40,6 +46,12 @@ interface Version {
   status: "generating" | "complete" | "error";
   usage: TokenUsage | null;
   rawLines: string[];
+  format: StreamFormat;
+}
+
+function formatTokens(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(n);
 }
 
 /**
@@ -100,13 +112,15 @@ export function Playground() {
     null,
   );
   const [inputValue, setInputValue] = useState("");
-  const [activeTab, setActiveTab] = useState<Tab>("json");
+  const [activeTab, setActiveTab] = useState<Tab>("spec");
   const [catalogSection, setCatalogSection] = useState<
     "components" | "actions"
   >("components");
   const [renderView, setRenderView] = useState<RenderView>("preview");
   const [mobileView, setMobileView] = useState<MobileView>("preview");
   const [versionsSheetOpen, setVersionsSheetOpen] = useState(false);
+  const [format, setFormat] = useState<StreamFormat>("jsonl");
+  const [editModes, setEditModes] = useState<EditMode[]>(["patch"]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mobileInputRef = useRef<HTMLTextAreaElement>(null);
   const versionsEndRef = useRef<HTMLDivElement>(null);
@@ -124,12 +138,13 @@ export function Playground() {
     rawLines: streamRawLines,
     send,
     clear,
-  } = useUIStream({
+  } = usePlaygroundStream({
     api: "/api/generate",
+    format,
+    editModes,
     onError: (err: Error) => {
       console.error("Generation error:", err);
       toast.error(err.message || "Generation failed. Please try again.");
-      // Mark the version as errored
       if (generatingVersionIdRef.current) {
         const erroredVersionId = generatingVersionIdRef.current;
         setVersions((prev) =>
@@ -140,7 +155,7 @@ export function Playground() {
         generatingVersionIdRef.current = null;
       }
     },
-  } as Parameters<typeof useUIStream>[0]);
+  });
 
   // Get the selected version
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
@@ -215,6 +230,7 @@ export function Playground() {
       status: "generating",
       usage: null,
       rawLines: [],
+      format,
     };
 
     generatingVersionIdRef.current = newVersionId;
@@ -250,9 +266,16 @@ export function Playground() {
     [selectedVersionId, isStreaming],
   );
 
-  const jsonCode = currentTree
-    ? JSON.stringify(currentTree, null, 2)
-    : "// waiting...";
+  const specCode = useMemo(() => {
+    if (!currentTree)
+      return format === "yaml" ? "# waiting..." : "// waiting...";
+    if (format === "yaml") {
+      return yamlStringify(currentTree, { indent: 2 }).trimEnd();
+    }
+    return JSON.stringify(currentTree, null, 2);
+  }, [currentTree, format]);
+
+  const specLang = format === "yaml" ? "yaml" : "json";
 
   const nestedCode = useMemo(() => {
     if (!currentTree || !currentTree.root) return "// waiting...";
@@ -275,7 +298,7 @@ export function Playground() {
       const componentName = element.type;
 
       const propsObj: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(element.props)) {
+      for (const [k, v] of Object.entries(element.props ?? {})) {
         if (v !== null && v !== undefined) {
           propsObj[k] = v;
         }
@@ -320,6 +343,15 @@ ${jsx}
   );
 }`;
   }, [currentTree]);
+
+  // Determine syntax lang for raw stream based on selected version's format
+  const streamLang = isSelectedVersionGenerating
+    ? format === "yaml"
+      ? "yaml"
+      : "json"
+    : selectedVersion?.format === "yaml"
+      ? "yaml"
+      : "json";
 
   // Chat pane content
   const chatPane = (
@@ -392,9 +424,15 @@ ${jsx}
                 )}
               </div>
               {version.usage && (
-                <div className="flex items-center gap-2 mt-1 ml-6">
+                <div className="mt-1 ml-6">
                   <span className="text-[10px] font-mono text-muted-foreground/60">
-                    {version.usage.totalTokens.toLocaleString()} tokens
+                    {formatTokens(
+                      version.usage.promptTokens - version.usage.cachedTokens,
+                    )}{" "}
+                    in · {formatTokens(version.usage.completionTokens)} out
+                    {version.usage.cachedTokens > 0
+                      ? ` · ${formatTokens(version.usage.cachedTokens)} cached`
+                      : ""}
                   </span>
                 </div>
               )}
@@ -425,20 +463,58 @@ ${jsx}
           autoFocus
         />
         <div className="flex justify-between items-center mt-2">
-          {versions.length > 0 ? (
-            <button
-              onClick={() => {
-                setVersions([]);
-                setSelectedVersionId(null);
-                clear();
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Clear
-            </button>
-          ) : (
-            <div />
-          )}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
+              {(["jsonl", "yaml"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFormat(f)}
+                  className={`px-1.5 py-0.5 transition-colors ${
+                    format === f
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
+              {(["patch", "merge", "diff"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => {
+                    setEditModes((prev) =>
+                      prev.includes(m)
+                        ? prev.length > 1
+                          ? prev.filter((x) => x !== m)
+                          : prev
+                        : [...prev, m],
+                    );
+                  }}
+                  className={`px-1.5 py-0.5 transition-colors ${
+                    editModes.includes(m)
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+            {versions.length > 0 && (
+              <button
+                onClick={() => {
+                  setVersions([]);
+                  setSelectedVersionId(null);
+                  clear();
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
           {isStreaming ? (
             <button
               onClick={() => clear()}
@@ -492,18 +568,18 @@ ${jsx}
   const copyText =
     activeTab === "stream"
       ? currentRawLines.join("\n")
-      : activeTab === "json"
-        ? jsonCode
+      : activeTab === "spec"
+        ? specCode
         : activeTab === "nested"
           ? nestedCode
           : activeTab === "visual"
-            ? jsonCode
+            ? specCode
             : "";
 
   const codePane = (
     <div className="h-full flex flex-col border-t border-border">
       <div className="border-b border-border px-3 h-9 flex items-center gap-3">
-        {(["json", "visual", "nested", "stream", "catalog"] as const).map(
+        {(["spec", "visual", "nested", "stream", "catalog"] as const).map(
           (tab) => (
             <button
               key={tab}
@@ -514,7 +590,7 @@ ${jsx}
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab}
+              {tab === "spec" ? (format === "yaml" ? "yaml" : "json") : tab}
             </button>
           ),
         )}
@@ -679,7 +755,7 @@ ${jsx}
           currentRawLines.length > 0 ? (
             <CodeBlock
               code={currentRawLines.join("\n")}
-              lang="json"
+              lang={streamLang}
               fillHeight
               hideCopyButton
             />
@@ -691,7 +767,12 @@ ${jsx}
         ) : activeTab === "nested" ? (
           <CodeBlock code={nestedCode} lang="json" fillHeight hideCopyButton />
         ) : (
-          <CodeBlock code={jsonCode} lang="json" fillHeight hideCopyButton />
+          <CodeBlock
+            code={specCode}
+            lang={specLang}
+            fillHeight
+            hideCopyButton
+          />
         )}
       </div>
     </div>
@@ -790,7 +871,7 @@ ${jsx}
               : 0}
           </button>
           {/* Code tabs */}
-          {(["json", "visual", "nested", "stream", "catalog"] as const).map(
+          {(["spec", "visual", "nested", "stream", "catalog"] as const).map(
             (tab) => (
               <button
                 key={tab}
@@ -801,7 +882,7 @@ ${jsx}
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tab}
+                {tab === "spec" ? (format === "yaml" ? "yaml" : "json") : tab}
               </button>
             ),
           )}
@@ -982,7 +1063,7 @@ ${jsx}
             currentRawLines.length > 0 ? (
               <CodeBlock
                 code={currentRawLines.join("\n")}
-                lang="json"
+                lang={streamLang}
                 fillHeight
                 hideCopyButton
               />
@@ -998,8 +1079,13 @@ ${jsx}
               fillHeight
               hideCopyButton
             />
-          ) : mobileView === "json" ? (
-            <CodeBlock code={jsonCode} lang="json" fillHeight hideCopyButton />
+          ) : mobileView === "spec" ? (
+            <CodeBlock
+              code={specCode}
+              lang={specLang}
+              fillHeight
+              hideCopyButton
+            />
           ) : mobileView === "preview" ? (
             currentTree && currentTree.root ? (
               <div className="w-full min-h-full flex items-center justify-center p-6">
@@ -1075,20 +1161,58 @@ ${jsx}
             rows={2}
           />
           <div className="flex justify-between items-center mt-2">
-            {versions.length > 0 ? (
-              <button
-                onClick={() => {
-                  setVersions([]);
-                  setSelectedVersionId(null);
-                  clear();
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Clear
-              </button>
-            ) : (
-              <div />
-            )}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
+                {(["jsonl", "yaml"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFormat(f)}
+                    className={`px-1.5 py-0.5 transition-colors ${
+                      format === f
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
+                {(["patch", "merge", "diff"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => {
+                      setEditModes((prev) =>
+                        prev.includes(m)
+                          ? prev.length > 1
+                            ? prev.filter((x) => x !== m)
+                            : prev
+                          : [...prev, m],
+                      );
+                    }}
+                    className={`px-1.5 py-0.5 transition-colors ${
+                      editModes.includes(m)
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              {versions.length > 0 && (
+                <button
+                  onClick={() => {
+                    setVersions([]);
+                    setSelectedVersionId(null);
+                    clear();
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             {isStreaming ? (
               <button
                 onClick={() => clear()}
@@ -1165,9 +1289,16 @@ ${jsx}
                     )}
                   </div>
                   {version.usage && (
-                    <div className="flex items-center gap-2 mt-1 ml-6">
+                    <div className="mt-1 ml-6">
                       <span className="text-[10px] font-mono text-muted-foreground/60">
-                        {version.usage.totalTokens.toLocaleString()} tokens
+                        {formatTokens(
+                          version.usage.promptTokens -
+                            version.usage.cachedTokens,
+                        )}{" "}
+                        in · {formatTokens(version.usage.completionTokens)} out
+                        {version.usage.cachedTokens > 0
+                          ? ` · ${formatTokens(version.usage.cachedTokens)} cached`
+                          : ""}
                       </span>
                     </div>
                   )}
