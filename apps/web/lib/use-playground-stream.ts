@@ -69,7 +69,8 @@ function parseLine(line: string): ParsedLine {
       };
     }
     if (parsed.__json_edit === true) {
-      const { __json_edit: _, ...mergeObj } = parsed;
+      const mergeObj = { ...parsed };
+      delete mergeObj.__json_edit;
       return { type: "json-edit", mergeObj };
     }
     return { type: "patch", patch: parsed as JsonPatch };

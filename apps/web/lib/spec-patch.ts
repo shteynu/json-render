@@ -68,8 +68,7 @@ export function removeSpecValue(newSpec: Spec, path: string): void {
     const elementKey = pathParts[0];
     if (!elementKey) return;
     if (pathParts.length === 1) {
-      const { [elementKey]: _, ...rest } = newSpec.elements;
-      newSpec.elements = rest;
+      delete newSpec.elements[elementKey];
     } else {
       const element = newSpec.elements[elementKey];
       if (element) {

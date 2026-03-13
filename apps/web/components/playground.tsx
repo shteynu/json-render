@@ -307,7 +307,7 @@ export function Playground() {
 
     // Pass the current tree as context so the API can iterate on it
     await send(inputValue.trim(), { previousSpec: currentTreeRef.current });
-  }, [inputValue, isStreaming, send]);
+  }, [inputValue, isStreaming, send, format]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
