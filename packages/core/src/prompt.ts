@@ -1,6 +1,6 @@
 import type { Spec } from "./types";
 import type { EditMode } from "./edit-modes";
-import { buildEditUserPrompt } from "./edit-modes";
+import { buildEditUserPrompt, isNonEmptySpec } from "./edit-modes";
 
 /**
  * Options for building a user prompt.
@@ -16,20 +16,6 @@ export interface UserPromptOptions {
   maxPromptLength?: number;
   /** Edit modes to offer when refining an existing spec. Default: `["patch"]`. */
   editModes?: EditMode[];
-}
-
-/**
- * Check whether a spec is non-empty (has a root and at least one element).
- */
-function isNonEmptySpec(spec: unknown): spec is Spec {
-  if (!spec || typeof spec !== "object") return false;
-  const s = spec as Record<string, unknown>;
-  return (
-    typeof s.root === "string" &&
-    typeof s.elements === "object" &&
-    s.elements !== null &&
-    Object.keys(s.elements as object).length > 0
-  );
 }
 
 /**

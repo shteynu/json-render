@@ -54,6 +54,73 @@ function formatTokens(n: number): string {
   return String(n);
 }
 
+function PlaygroundControls({
+  format,
+  setFormat,
+  editModes,
+  setEditModes,
+  showClear,
+  onClear,
+}: {
+  format: StreamFormat;
+  setFormat: (f: StreamFormat) => void;
+  editModes: EditMode[];
+  setEditModes: React.Dispatch<React.SetStateAction<EditMode[]>>;
+  showClear: boolean;
+  onClear: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
+        {(["jsonl", "yaml"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFormat(f)}
+            className={`px-1.5 py-0.5 transition-colors ${
+              format === f
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
+        {(["patch", "merge", "diff"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => {
+              setEditModes((prev) =>
+                prev.includes(m)
+                  ? prev.length > 1
+                    ? prev.filter((x) => x !== m)
+                    : prev
+                  : [...prev, m],
+              );
+            }}
+            className={`px-1.5 py-0.5 transition-colors ${
+              editModes.includes(m)
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+      {showClear && (
+        <button
+          onClick={onClear}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+}
+
 /**
  * Convert a flat Spec into a nested tree structure that is easier for humans
  * to read. Children keys are resolved recursively into inline objects.
@@ -463,58 +530,18 @@ ${jsx}
           autoFocus
         />
         <div className="flex justify-between items-center mt-2">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
-              {(["jsonl", "yaml"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFormat(f)}
-                  className={`px-1.5 py-0.5 transition-colors ${
-                    format === f
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
-              {(["patch", "merge", "diff"] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => {
-                    setEditModes((prev) =>
-                      prev.includes(m)
-                        ? prev.length > 1
-                          ? prev.filter((x) => x !== m)
-                          : prev
-                        : [...prev, m],
-                    );
-                  }}
-                  className={`px-1.5 py-0.5 transition-colors ${
-                    editModes.includes(m)
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-            {versions.length > 0 && (
-              <button
-                onClick={() => {
-                  setVersions([]);
-                  setSelectedVersionId(null);
-                  clear();
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Clear
-              </button>
-            )}
-          </div>
+          <PlaygroundControls
+            format={format}
+            setFormat={setFormat}
+            editModes={editModes}
+            setEditModes={setEditModes}
+            showClear={versions.length > 0}
+            onClear={() => {
+              setVersions([]);
+              setSelectedVersionId(null);
+              clear();
+            }}
+          />
           {isStreaming ? (
             <button
               onClick={() => clear()}
@@ -1161,58 +1188,18 @@ ${jsx}
             rows={2}
           />
           <div className="flex justify-between items-center mt-2">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
-                {(["jsonl", "yaml"] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFormat(f)}
-                    className={`px-1.5 py-0.5 transition-colors ${
-                      format === f
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center rounded border border-border text-[10px] font-mono overflow-hidden">
-                {(["patch", "merge", "diff"] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => {
-                      setEditModes((prev) =>
-                        prev.includes(m)
-                          ? prev.length > 1
-                            ? prev.filter((x) => x !== m)
-                            : prev
-                          : [...prev, m],
-                      );
-                    }}
-                    className={`px-1.5 py-0.5 transition-colors ${
-                      editModes.includes(m)
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-              {versions.length > 0 && (
-                <button
-                  onClick={() => {
-                    setVersions([]);
-                    setSelectedVersionId(null);
-                    clear();
-                  }}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
+            <PlaygroundControls
+              format={format}
+              setFormat={setFormat}
+              editModes={editModes}
+              setEditModes={setEditModes}
+              showClear={versions.length > 0}
+              onClear={() => {
+                setVersions([]);
+                setSelectedVersionId(null);
+                clear();
+              }}
+            />
             {isStreaming ? (
               <button
                 onClick={() => clear()}

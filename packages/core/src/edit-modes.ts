@@ -207,7 +207,7 @@ function addLineNumbers(text: string): string {
     .join("\n");
 }
 
-function isNonEmptySpec(spec: unknown): spec is Spec {
+export function isNonEmptySpec(spec: unknown): spec is Spec {
   if (!spec || typeof spec !== "object") return false;
   const s = spec as Record<string, unknown>;
   return (

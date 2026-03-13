@@ -1,7 +1,11 @@
 import { streamText } from "ai";
 import { headers } from "next/headers";
 import type { Spec, EditMode } from "@json-render/core";
-import { buildUserPrompt, buildEditUserPrompt } from "@json-render/core";
+import {
+  buildUserPrompt,
+  buildEditUserPrompt,
+  isNonEmptySpec,
+} from "@json-render/core";
 import { yamlPrompt } from "@json-render/yaml";
 import { stringify as yamlStringify } from "yaml";
 import { minuteRateLimit, dailyRateLimit } from "@/lib/rate-limit";
@@ -34,17 +38,6 @@ function getSystemPrompt(isYaml: boolean, editModes?: EditMode[]): string {
     customRules: PLAYGROUND_RULES,
     editModes,
   });
-}
-
-function isNonEmptySpec(spec: unknown): spec is Spec {
-  if (!spec || typeof spec !== "object") return false;
-  const s = spec as Record<string, unknown>;
-  return (
-    typeof s.root === "string" &&
-    typeof s.elements === "object" &&
-    s.elements !== null &&
-    Object.keys(s.elements as object).length > 0
-  );
 }
 
 function buildYamlUserPrompt(

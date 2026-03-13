@@ -10,11 +10,11 @@ import {
 } from "@json-render/core";
 import { createYamlStreamCompiler } from "./parser";
 
-const YAML_SPEC_FENCE = "```yaml-spec";
-const YAML_EDIT_FENCE = "```yaml-edit";
-const YAML_PATCH_FENCE = "```yaml-patch";
-const DIFF_FENCE = "```diff";
-const FENCE_CLOSE = "```";
+export const YAML_SPEC_FENCE = "```yaml-spec";
+export const YAML_EDIT_FENCE = "```yaml-edit";
+export const YAML_PATCH_FENCE = "```yaml-patch";
+export const DIFF_FENCE = "```diff";
+export const FENCE_CLOSE = "```";
 
 export interface YamlTransformOptions {
   /** Seed with a previous spec for multi-turn edit support. */
@@ -332,12 +332,7 @@ export function createYamlTransform(
     if (fenceMode !== null) {
       processCompleteLine(lineBuffer, controller);
     } else {
-      const trimmed = lineBuffer.trim();
-      if (trimmed) {
-        emitTextDelta(lineBuffer, controller);
-      } else {
-        emitTextDelta(lineBuffer, controller);
-      }
+      emitTextDelta(lineBuffer, controller);
     }
     lineBuffer = "";
     buffering = false;

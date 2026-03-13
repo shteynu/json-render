@@ -135,6 +135,7 @@ function Dashboard({ spec }) {
 | `@json-render/jotai`        | Jotai adapter for `StateStore`                                         |
 | `@json-render/xstate`       | XState Store (atom) adapter for `StateStore`                           |
 | `@json-render/mcp`          | MCP Apps integration for Claude, ChatGPT, Cursor, VS Code              |
+| `@json-render/yaml`         | YAML wire format with streaming parser, edit modes, AI SDK transform   |
 
 ## Renderers
 

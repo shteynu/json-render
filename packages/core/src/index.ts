@@ -189,4 +189,8 @@ export type {
   EditConfig,
   BuildEditUserPromptOptions,
 } from "./edit-modes";
-export { buildEditInstructions, buildEditUserPrompt } from "./edit-modes";
+export {
+  buildEditInstructions,
+  buildEditUserPrompt,
+  isNonEmptySpec,
+} from "./edit-modes";

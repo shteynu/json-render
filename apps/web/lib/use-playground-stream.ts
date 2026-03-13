@@ -2,16 +2,18 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { Spec, JsonPatch, EditMode } from "@json-render/core";
-import {
-  setByPath,
-  getByPath,
-  removeByPath,
-  deepMergeSpec,
-  diffToPatches,
-} from "@json-render/core";
+import { deepMergeSpec, diffToPatches } from "@json-render/core";
 import { parse as yamlParse, stringify as yamlStringify } from "yaml";
 import { applyPatch as applyUnifiedDiff } from "diff";
-import { createYamlStreamCompiler } from "@json-render/yaml";
+import {
+  createYamlStreamCompiler,
+  YAML_SPEC_FENCE,
+  YAML_EDIT_FENCE,
+  YAML_PATCH_FENCE,
+  DIFF_FENCE,
+  FENCE_CLOSE,
+} from "@json-render/yaml";
+import { applySpecPatch } from "./spec-patch";
 
 export type StreamFormat = "jsonl" | "yaml";
 
@@ -76,167 +78,6 @@ function parseLine(line: string): ParsedLine {
   }
 }
 
-// ── Spec patch helpers ──
-
-function setSpecValue(newSpec: Spec, path: string, value: unknown): void {
-  if (path === "/root") {
-    newSpec.root = value as string;
-    return;
-  }
-  if (path === "/state") {
-    newSpec.state = value as Record<string, unknown>;
-    return;
-  }
-  if (path.startsWith("/state/")) {
-    if (!newSpec.state) newSpec.state = {};
-    setByPath(
-      newSpec.state as Record<string, unknown>,
-      path.slice("/state".length),
-      value,
-    );
-    return;
-  }
-  if (path.startsWith("/elements/")) {
-    const pathParts = path.slice("/elements/".length).split("/");
-    const elementKey = pathParts[0];
-    if (!elementKey) return;
-    if (pathParts.length === 1) {
-      if (value == null || typeof value !== "object") return;
-      const el = value as Record<string, unknown>;
-      newSpec.elements[elementKey] = {
-        ...el,
-        type: typeof el.type === "string" ? el.type : "",
-        props: el.props != null && typeof el.props === "object" ? el.props : {},
-        children: Array.isArray(el.children) ? el.children : [],
-      } as Spec["elements"][string];
-    } else {
-      const element = newSpec.elements[elementKey];
-      if (element) {
-        const newElement = { ...element };
-        setByPath(
-          newElement as unknown as Record<string, unknown>,
-          "/" + pathParts.slice(1).join("/"),
-          value,
-        );
-        newSpec.elements[elementKey] = newElement;
-      }
-    }
-  }
-}
-
-function removeSpecValue(newSpec: Spec, path: string): void {
-  if (path === "/state") {
-    delete newSpec.state;
-    return;
-  }
-  if (path.startsWith("/state/") && newSpec.state) {
-    removeByPath(
-      newSpec.state as Record<string, unknown>,
-      path.slice("/state".length),
-    );
-    return;
-  }
-  if (path.startsWith("/elements/")) {
-    const pathParts = path.slice("/elements/".length).split("/");
-    const elementKey = pathParts[0];
-    if (!elementKey) return;
-    if (pathParts.length === 1) {
-      const { [elementKey]: _, ...rest } = newSpec.elements;
-      newSpec.elements = rest;
-    } else {
-      const element = newSpec.elements[elementKey];
-      if (element) {
-        const newElement = { ...element };
-        removeByPath(
-          newElement as unknown as Record<string, unknown>,
-          "/" + pathParts.slice(1).join("/"),
-        );
-        newSpec.elements[elementKey] = newElement;
-      }
-    }
-  }
-}
-
-function getSpecValue(spec: Spec, path: string): unknown {
-  if (path === "/root") return spec.root;
-  if (path === "/state") return spec.state;
-  if (path.startsWith("/state/") && spec.state) {
-    return getByPath(
-      spec.state as Record<string, unknown>,
-      path.slice("/state".length),
-    );
-  }
-  return getByPath(spec as unknown as Record<string, unknown>, path);
-}
-
-function normalizeSpec(spec: Spec): void {
-  // state: null → undefined (YAML parses "state:" with no value as null)
-  if (
-    spec.state === null ||
-    (spec.state !== undefined && typeof spec.state !== "object")
-  ) {
-    spec.state = undefined;
-  }
-
-  for (const key of Object.keys(spec.elements)) {
-    const el = spec.elements[key];
-    if (!el || typeof el !== "object") {
-      delete spec.elements[key];
-      continue;
-    }
-    if (el.props == null || typeof el.props !== "object") {
-      spec.elements[key] = { ...el, props: {} } as Spec["elements"][string];
-    }
-    if (!Array.isArray(spec.elements[key]!.children)) {
-      spec.elements[key] = {
-        ...spec.elements[key]!,
-        children: [],
-      } as Spec["elements"][string];
-    }
-  }
-}
-
-function applyPatch(spec: Spec, patch: JsonPatch): Spec {
-  const newSpec = {
-    ...spec,
-    elements: { ...spec.elements },
-    ...(spec.state ? { state: { ...spec.state } } : {}),
-  };
-  switch (patch.op) {
-    case "add":
-    case "replace":
-      setSpecValue(newSpec, patch.path, patch.value);
-      break;
-    case "remove":
-      removeSpecValue(newSpec, patch.path);
-      break;
-    case "move":
-      if (patch.from) {
-        const moveValue = getSpecValue(newSpec, patch.from);
-        removeSpecValue(newSpec, patch.from);
-        setSpecValue(newSpec, patch.path, moveValue);
-      }
-      break;
-    case "copy":
-      if (patch.from) {
-        setSpecValue(newSpec, patch.path, getSpecValue(newSpec, patch.from));
-      }
-      break;
-    case "test":
-      break;
-  }
-  normalizeSpec(newSpec);
-  return newSpec;
-}
-
-// ── YAML fence parsing state machine ──
-
-const YAML_SPEC_FENCE = "```yaml-spec";
-const YAML_EDIT_FENCE = "```yaml-edit";
-const YAML_PATCH_FENCE = "```yaml-patch";
-const DIFF_FENCE = "```diff";
-const FENCE_CLOSE = "```";
-
 type FenceState = "outside" | "yaml-spec" | "yaml-edit" | "yaml-patch" | "diff";
 
 // ── Hook ──
@@ -253,6 +94,7 @@ export function usePlaygroundStream({
   const [error, setError] = useState<Error | null>(null);
   const [usage, setUsage] = useState<TokenUsage | null>(null);
   const [rawLines, setRawLines] = useState<string[]>([]);
+  const rawLinesRef = useRef<string[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const onCompleteRef = useRef(onComplete);
@@ -276,6 +118,7 @@ export function usePlaygroundStream({
       setIsStreaming(true);
       setError(null);
       setUsage(null);
+      rawLinesRef.current = [];
       setRawLines([]);
 
       const previousSpec = context?.previousSpec as Spec | undefined;
@@ -354,7 +197,7 @@ export function usePlaygroundStream({
                 }
               }
 
-              setRawLines((prev) => [...prev, line]);
+              rawLinesRef.current.push(line);
 
               if (fenceState === "outside") {
                 if (
@@ -387,7 +230,7 @@ export function usePlaygroundStream({
                   const { result, newPatches } = compiler.flush();
                   if (result && typeof result === "object" && result.root) {
                     for (const patch of newPatches) {
-                      currentSpec = applyPatch(currentSpec, patch);
+                      currentSpec = applySpecPatch(currentSpec, patch);
                     }
                     setSpec({ ...currentSpec });
                   }
@@ -404,7 +247,7 @@ export function usePlaygroundStream({
                         merged,
                       );
                       for (const patch of patches) {
-                        currentSpec = applyPatch(currentSpec, patch);
+                        currentSpec = applySpecPatch(currentSpec, patch);
                       }
                       setSpec({ ...currentSpec });
                     }
@@ -418,7 +261,7 @@ export function usePlaygroundStream({
                     try {
                       const patch = JSON.parse(t) as JsonPatch;
                       if (patch.op) {
-                        currentSpec = applyPatch(currentSpec, patch);
+                        currentSpec = applySpecPatch(currentSpec, patch);
                       }
                     } catch {
                       // Skip invalid JSON lines
@@ -437,7 +280,7 @@ export function usePlaygroundStream({
                           parsed as Record<string, unknown>,
                         );
                         for (const patch of patches) {
-                          currentSpec = applyPatch(currentSpec, patch);
+                          currentSpec = applySpecPatch(currentSpec, patch);
                         }
                         setSpec({ ...currentSpec });
                       }
@@ -451,7 +294,7 @@ export function usePlaygroundStream({
                 const { newPatches } = compiler.push(line + "\n");
                 if (newPatches.length > 0) {
                   for (const patch of newPatches) {
-                    currentSpec = applyPatch(currentSpec, patch);
+                    currentSpec = applySpecPatch(currentSpec, patch);
                   }
                   setSpec({ ...currentSpec });
                 }
@@ -463,6 +306,7 @@ export function usePlaygroundStream({
                 diffAccumulated += line + "\n";
               }
             }
+            setRawLines([...rawLinesRef.current]);
           }
 
           // Process remaining buffer
@@ -488,7 +332,7 @@ export function usePlaygroundStream({
               const { result, newPatches } = compiler.flush();
               if (result && typeof result === "object" && result.root) {
                 for (const patch of newPatches) {
-                  currentSpec = applyPatch(currentSpec, patch);
+                  currentSpec = applySpecPatch(currentSpec, patch);
                 }
                 setSpec({ ...currentSpec });
               }
@@ -539,7 +383,7 @@ export function usePlaygroundStream({
                         parsed as Record<string, unknown>,
                       );
                       for (const patch of patches) {
-                        currentSpec = applyPatch(currentSpec, patch);
+                        currentSpec = applySpecPatch(currentSpec, patch);
                       }
                       setSpec({ ...currentSpec });
                     }
@@ -553,7 +397,7 @@ export function usePlaygroundStream({
 
               if (jsonlDiffState === "diff") {
                 jsonlDiffAccumulated += line + "\n";
-                setRawLines((prev) => [...prev, line]);
+                rawLinesRef.current.push(line);
                 continue;
               }
 
@@ -572,16 +416,17 @@ export function usePlaygroundStream({
                   merged,
                 );
                 for (const patch of patches) {
-                  currentSpec = applyPatch(currentSpec, patch);
+                  currentSpec = applySpecPatch(currentSpec, patch);
                 }
-                setRawLines((prev) => [...prev, trimmed]);
+                rawLinesRef.current.push(trimmed);
                 setSpec({ ...currentSpec });
               } else {
-                setRawLines((prev) => [...prev, trimmed]);
-                currentSpec = applyPatch(currentSpec, result.patch);
+                rawLinesRef.current.push(trimmed);
+                currentSpec = applySpecPatch(currentSpec, result.patch);
                 setSpec({ ...currentSpec });
               }
             }
+            setRawLines([...rawLinesRef.current]);
           }
 
           if (buffer.trim()) {
@@ -600,13 +445,13 @@ export function usePlaygroundStream({
                   merged,
                 );
                 for (const patch of patches) {
-                  currentSpec = applyPatch(currentSpec, patch);
+                  currentSpec = applySpecPatch(currentSpec, patch);
                 }
-                setRawLines((prev) => [...prev, trimmed]);
+                rawLinesRef.current.push(trimmed);
                 setSpec({ ...currentSpec });
               } else {
-                setRawLines((prev) => [...prev, trimmed]);
-                currentSpec = applyPatch(currentSpec, result.patch);
+                rawLinesRef.current.push(trimmed);
+                currentSpec = applySpecPatch(currentSpec, result.patch);
                 setSpec({ ...currentSpec });
               }
             }
