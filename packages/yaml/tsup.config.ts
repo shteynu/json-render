@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ["@json-render/core", "yaml"],
+  external: ["@json-render/core", "yaml", "diff"],
 });
