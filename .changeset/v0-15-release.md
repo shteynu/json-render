@@ -1,5 +1,5 @@
 ---
-"@json-render/core": minor
+"@json-render/core": patch
 ---
 
 Add yaml format support to `buildUserPrompt`
