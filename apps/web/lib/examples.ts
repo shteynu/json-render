@@ -4,6 +4,7 @@ export type Example = {
   description: string;
   tags: string[];
   githubPath: string;
+  demoUrl?: string;
 };
 
 const GITHUB_BASE =
@@ -17,6 +18,7 @@ export const examples: Example[] = [
       "AI chat app with tool calling, streaming UI, and rich components powered by the AI SDK.",
     tags: ["React", "Next.js", "AI"],
     githubPath: "examples/chat",
+    demoUrl: "https://chat-demo.json-render.dev",
   },
   {
     slug: "dashboard",
@@ -25,6 +27,7 @@ export const examples: Example[] = [
       "AI-generated dashboard with drag-and-drop, charts, and real-time data binding.",
     tags: ["React", "Next.js", "AI"],
     githubPath: "examples/dashboard",
+    demoUrl: "https://dashboard-demo.json-render.dev",
   },
   {
     slug: "no-ai",
@@ -33,6 +36,7 @@ export const examples: Example[] = [
       "Static specs rendered without any AI — forms, cards, tables, and more from hardcoded JSON.",
     tags: ["React", "Next.js"],
     githubPath: "examples/no-ai",
+    demoUrl: "https://no-ai-demo.json-render.dev",
   },
   {
     slug: "svelte",
@@ -41,6 +45,7 @@ export const examples: Example[] = [
       "Svelte renderer demo with counter, todo list, and two-way data binding.",
     tags: ["Svelte", "Vite"],
     githubPath: "examples/svelte",
+    demoUrl: "https://svelte-demo.json-render.dev",
   },
   {
     slug: "svelte-chat",
@@ -48,6 +53,7 @@ export const examples: Example[] = [
     description: "AI chat app built with SvelteKit and the Svelte renderer.",
     tags: ["Svelte", "SvelteKit", "AI"],
     githubPath: "examples/svelte-chat",
+    demoUrl: "https://json-render-svelte-chat-demo.labs.vercel.dev",
   },
   {
     slug: "vue",
@@ -56,6 +62,7 @@ export const examples: Example[] = [
       "Vue renderer demo with counter, todo list, and two-way data binding.",
     tags: ["Vue", "Vite"],
     githubPath: "examples/vue",
+    demoUrl: "https://vue-demo.json-render.dev",
   },
   {
     slug: "solid",
@@ -64,6 +71,7 @@ export const examples: Example[] = [
       "Solid renderer demo with counter, todo list, and two-way data binding.",
     tags: ["Solid", "Vite"],
     githubPath: "examples/solid",
+    demoUrl: "https://solid-demo.json-render.dev",
   },
   {
     slug: "vite-renderers",
@@ -80,6 +88,7 @@ export const examples: Example[] = [
       "Generate HTML and plain-text emails from json-render specs using React Email.",
     tags: ["React", "Email"],
     githubPath: "examples/react-email",
+    demoUrl: "https://react-email-demo.json-render.dev",
   },
   {
     slug: "react-pdf",
@@ -88,6 +97,7 @@ export const examples: Example[] = [
       "Generate PDF documents from json-render specs with @react-pdf/renderer.",
     tags: ["React", "PDF"],
     githubPath: "examples/react-pdf",
+    demoUrl: "https://react-pdf-demo.json-render.dev",
   },
   {
     slug: "react-three-fiber",
@@ -96,6 +106,7 @@ export const examples: Example[] = [
       "3D scenes generated from json-render specs using Three.js and React Three Fiber.",
     tags: ["React", "3D"],
     githubPath: "examples/react-three-fiber",
+    demoUrl: "https://react-three-fiber-demo.json-render.dev",
   },
   {
     slug: "react-native",
@@ -111,6 +122,7 @@ export const examples: Example[] = [
     description: "Generate videos from json-render specs using Remotion.",
     tags: ["React", "Video"],
     githubPath: "examples/remotion",
+    demoUrl: "https://remotion-demo.json-render.dev",
   },
   {
     slug: "image",
@@ -119,6 +131,7 @@ export const examples: Example[] = [
       "Generate OG images and social cards from json-render specs using Satori.",
     tags: ["React", "Image"],
     githubPath: "examples/image",
+    demoUrl: "https://image-demo.json-render.dev",
   },
   {
     slug: "mcp",

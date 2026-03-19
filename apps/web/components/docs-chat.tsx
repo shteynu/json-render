@@ -261,10 +261,10 @@ export function DocsChat({
     }
   }, [messages, isLoading]);
 
-  // Cmd+K to open sidebar and focus prompt, Escape to close
+  // Cmd+I to open sidebar and focus prompt, Escape to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if (e.key === "i" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen((prev) => {
           if (!prev) {
@@ -502,7 +502,7 @@ export function DocsChat({
         >
           Ask AI
           <kbd className="hidden sm:inline-flex items-center gap-0.5 text-xs opacity-60 font-mono">
-            <span>&#8984;</span>K
+            <span>&#8984;</span>I
           </kbd>
         </button>
       )}
