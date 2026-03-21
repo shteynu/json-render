@@ -218,7 +218,8 @@ function FirstPersonController({
       .addVectors(frontVector, sideVector)
       .normalize()
       .multiplyScalar(speed * (sprint ? 1.8 : 1))
-      .applyEuler(camera.rotation);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch
+      .applyEuler(camera.rotation as any);
 
     body.setLinvel(
       { x: playerDirection.current.x, y: vel.y, z: playerDirection.current.z },
@@ -288,7 +289,8 @@ function AnimatedCharacterModelInner({
 
     try {
       characterGltf.scene.scale.set(1, 1, 1);
-      resetBoneScales(characterGltf.scene);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch
+      resetBoneScales(characterGltf.scene as any);
 
       characterRef.current.clear();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch between drei and three
