@@ -1,4 +1,4 @@
-import type { Scene, SceneObject, ObjectType } from "./types";
+import type { Scene, SceneObject } from "./types";
 
 interface SpecElement {
   type: string;

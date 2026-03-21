@@ -36,7 +36,13 @@ interface GameModelProps {
   objectId?: string | null;
 }
 
-function ModelInner({ url, userData }: { url: string; userData: any }) {
+function ModelInner({
+  url,
+  userData,
+}: {
+  url: string;
+  userData: Record<string, unknown>;
+}) {
   const groupRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF(url);
   const setIsLoading = useEditorStore((s) => s.setIsLoading);
@@ -44,8 +50,8 @@ function ModelInner({ url, userData }: { url: string; userData: any }) {
   const model = scene.clone();
 
   useEffect(() => {
-    model.traverse((node: any) => {
-      if (node.isMesh) {
+    model.traverse((node) => {
+      if ((node as THREE.Mesh).isMesh) {
         node.castShadow = true;
         node.receiveShadow = true;
       }

@@ -2,12 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
-import {
-  RigidBody,
-  CuboidCollider,
-  BallCollider,
-  CapsuleCollider,
-} from "@react-three/rapier";
+import { RigidBody } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
 import { useEditorStore } from "@/lib/store";
 
@@ -61,28 +56,6 @@ function buildMaterialProps(mat?: MaterialProps | null) {
     ...(mat.opacity != null ? { opacity: mat.opacity, transparent: true } : {}),
     ...(mat.wireframe ? { wireframe: true } : {}),
   };
-}
-
-function ColliderForType({
-  type,
-  scale,
-}: {
-  type: string;
-  scale: [number, number, number];
-}) {
-  if (type === "ball")
-    return (
-      <BallCollider args={[Math.max(scale[0], scale[1], scale[2]) * 0.5]} />
-    );
-  if (type === "capsule")
-    return (
-      <CapsuleCollider
-        args={[scale[1] * 0.25, Math.max(scale[0], scale[2]) * 0.5]}
-      />
-    );
-  return (
-    <CuboidCollider args={[scale[0] * 0.5, scale[1] * 0.5, scale[2] * 0.5]} />
-  );
 }
 
 function PhysicsWrapper({
@@ -616,7 +589,10 @@ export function GameExtrude({
         receiveShadow={receiveShadow ?? false}
       >
         <extrudeGeometry
-          args={[shape as any, { depth: depth ?? 1, bevelEnabled: false }]}
+          args={[
+            shape as THREE.Shape,
+            { depth: depth ?? 1, bevelEnabled: false },
+          ]}
         />
         <meshStandardMaterial {...buildMaterialProps(material)} />
       </mesh>
@@ -666,7 +642,7 @@ export function GameTube({
       >
         <tubeGeometry
           args={[
-            curve as any,
+            curve as THREE.Curve<THREE.Vector3>,
             tubularSegments ?? 64,
             radius ?? 0.1,
             radialSegments ?? 8,
@@ -738,7 +714,7 @@ export function GameShape({
         castShadow={castShadow ?? false}
         receiveShadow={receiveShadow ?? false}
       >
-        <shapeGeometry args={[shape as any]} />
+        <shapeGeometry args={[shape as THREE.Shape]} />
         <meshStandardMaterial
           {...buildMaterialProps(material)}
           side={THREE.DoubleSide}

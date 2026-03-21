@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { useThree } from "@react-three/fiber";
 import { TransformControls, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -20,6 +20,7 @@ export function EditorControls() {
 }
 
 function EditorOrbitControls() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const orbitRef = useRef<any>(null);
 
   useEffect(() => {
@@ -59,10 +60,12 @@ function TransformGizmo() {
     saveToHistory,
   } = useEditorStore();
   const { scene } = useThree();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
 
   const findObjectById = useCallback(
     (id: string): THREE.Object3D | null => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let found: any = null;
       scene.traverse((child) => {
         if (child.userData?.id === id || child.userData?.objectId === id) {
@@ -84,7 +87,9 @@ function TransformGizmo() {
       if (controlsRef.current) {
         try {
           controlsRef.current.detach();
-        } catch {}
+        } catch {
+          /* may not be attached */
+        }
       }
       return;
     }
@@ -94,7 +99,9 @@ function TransformGizmo() {
       if (obj && controlsRef.current) {
         try {
           controlsRef.current.attach(obj);
-        } catch {}
+        } catch {
+          /* object may not be ready */
+        }
       }
     }, 50);
 
@@ -110,6 +117,7 @@ function TransformGizmo() {
     const onDragEnd = () =>
       window.dispatchEvent(new CustomEvent("transform-end"));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     controls.addEventListener("dragging-changed", (e: any) => {
       if (e.value) onDragStart();
       else onDragEnd();

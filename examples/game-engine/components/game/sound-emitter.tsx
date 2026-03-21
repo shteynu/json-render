@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { useThree, useFrame } from "@react-three/fiber";
+import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useEditorStore } from "@/lib/store";
 
@@ -35,10 +35,12 @@ export function SoundEmitter({
     if (!isPlaying || !url) return;
 
     const listener = new THREE.AudioListener();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     camera.add(listener as any);
     listenerRef.current = listener;
 
     const loader = new THREE.AudioLoader();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let audio: any;
 
     if (positional !== false) {
@@ -59,6 +61,7 @@ export function SoundEmitter({
 
     return () => {
       if (soundRef.current?.isPlaying) soundRef.current.stop();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       camera.remove(listener as any);
     };
   }, [isPlaying, url, loop, volume, positional, distance, camera]);

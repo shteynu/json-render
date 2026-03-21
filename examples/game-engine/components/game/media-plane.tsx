@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 interface MediaPlaneProps {
@@ -81,7 +80,10 @@ export function MediaPlane({
     >
       <planeGeometry args={[w, h]} />
       {texture ? (
-        <meshBasicMaterial map={texture as any} side={THREE.DoubleSide} />
+        <meshBasicMaterial
+          map={texture as THREE.Texture}
+          side={THREE.DoubleSide}
+        />
       ) : (
         <meshStandardMaterial color="#333" side={THREE.DoubleSide} />
       )}

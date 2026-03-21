@@ -5,6 +5,14 @@ import { useState, useEffect, useRef } from "react";
 import { ArrowUp, Loader2, MessageSquare } from "lucide-react";
 import { useEditorStore } from "@/lib/store";
 import { useIsMobile } from "@/lib/use-mobile";
+import type {
+  ObjectType,
+  TransformMode,
+  SceneObject,
+  Material,
+  Physics,
+  Damage,
+} from "@/lib/types";
 
 export function InGamePrompt() {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,31 +45,45 @@ export function InGamePrompt() {
     try {
       switch (action.function) {
         case "addObject":
-          addObject(action.args[0] as any);
+          addObject(action.args[0] as ObjectType);
           break;
         case "createCustomObject":
-          createCustomObject(action.args[0] as any, action.args[1] as any);
+          createCustomObject(
+            action.args[0] as ObjectType,
+            action.args[1] as Partial<SceneObject>,
+          );
           break;
         case "updateObjectTransform":
           updateObjectTransform(
             action.args[0] as string,
-            action.args[1] as any,
+            action.args[1] as Partial<
+              Pick<SceneObject, "position" | "rotation" | "scale">
+            >,
           );
           break;
         case "updateObjectMaterial":
-          updateObjectMaterial(action.args[0] as string, action.args[1] as any);
+          updateObjectMaterial(
+            action.args[0] as string,
+            action.args[1] as Partial<Material>,
+          );
           break;
         case "updateObjectPhysics":
-          updateObjectPhysics(action.args[0] as string, action.args[1] as any);
+          updateObjectPhysics(
+            action.args[0] as string,
+            action.args[1] as Partial<Physics>,
+          );
           break;
         case "updateDamage":
-          updateDamage(action.args[0] as string, action.args[1] as any);
+          updateDamage(
+            action.args[0] as string,
+            action.args[1] as Partial<Damage>,
+          );
           break;
         case "selectObject":
           selectObject(action.args[0] as string);
           break;
         case "setTransformMode":
-          setTransformMode(action.args[0] as any);
+          setTransformMode(action.args[0] as TransformMode);
           break;
       }
     } catch (error) {

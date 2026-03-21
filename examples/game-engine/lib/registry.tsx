@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { defineRegistry } from "@json-render/react";
 import { threeComponents } from "@json-render/react-three-fiber";

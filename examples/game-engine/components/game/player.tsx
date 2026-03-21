@@ -64,6 +64,7 @@ function FirstPersonController({
   isPromptOpen: boolean;
 }) {
   const { camera } = useThree();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const playerRef = useRef<RapierRigidBody>(null);
   const isMobile = useIsMobile();
@@ -78,7 +79,6 @@ function FirstPersonController({
   });
 
   const { rapier, world } = useRapier();
-  const playerVelocity = useRef(new THREE.Vector3());
   const playerDirection = useRef(new THREE.Vector3());
   const isOnGround = useRef(true);
   const jumpCooldown = useRef(0);
@@ -218,7 +218,7 @@ function FirstPersonController({
       .addVectors(frontVector, sideVector)
       .normalize()
       .multiplyScalar(speed * (sprint ? 1.8 : 1))
-      .applyEuler(camera.rotation as any);
+      .applyEuler(camera.rotation);
 
     body.setLinvel(
       { x: playerDirection.current.x, y: vel.y, z: playerDirection.current.z },
@@ -291,13 +291,17 @@ function AnimatedCharacterModelInner({
       resetBoneScales(characterGltf.scene);
 
       characterRef.current.clear();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch between drei and three
       characterRef.current.add(characterGltf.scene.clone() as any);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch
       const mixer = new THREE.AnimationMixer(characterRef.current as any);
       mixerRef.current = mixer;
 
       if (idleGltf.animations[0] && walkGltf.animations[0]) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch
         const idleAction = mixer.clipAction(idleGltf.animations[0] as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch
         const walkAction = mixer.clipAction(walkGltf.animations[0] as any);
         actionsRef.current = { idle: idleAction, walk: walkAction };
         idleAction.play();

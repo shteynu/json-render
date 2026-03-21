@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useEditorStore } from "@/lib/store";
@@ -16,7 +16,10 @@ export function CharacterInteraction() {
   const isPlaying = useEditorStore((s) => s.isPlaying);
 
   const activeScene = scenes.find((s) => s.id === activeSceneId) || scenes[0];
-  const objects = activeScene ? activeScene.objects : [];
+  const objects = useMemo(
+    () => (activeScene ? activeScene.objects : []),
+    [activeScene],
+  );
 
   useEffect(() => {
     if (!isPlaying) {
@@ -28,7 +31,7 @@ export function CharacterInteraction() {
       if (!camera) return;
 
       const cameraPos = new THREE.Vector3();
-      camera.getWorldPosition(cameraPos as any);
+      camera.getWorldPosition(cameraPos);
 
       const characters = objects.filter(
         (obj) => obj.type === "character" && obj.visible,

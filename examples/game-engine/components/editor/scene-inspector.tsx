@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, Eye, EyeOff, Trash2 } from "lucide-react";
 import { useEditorStore } from "@/lib/store";
 import { useIsMobile } from "@/lib/use-mobile";
-import type { SceneObject } from "@/lib/types";
+import type { SceneObject, Physics, LightType } from "@/lib/types";
 
 function Section({
   label,
@@ -308,7 +308,9 @@ function PhysicsEditor({ obj }: { obj: SceneObject }) {
         <SelectInput
           value={obj.physics.colliderType}
           onChange={(v) =>
-            updateObjectPhysics(obj.id, { colliderType: v as any })
+            updateObjectPhysics(obj.id, {
+              colliderType: v as Physics["colliderType"],
+            })
           }
           options={[
             { value: "none", label: "None" },
@@ -383,7 +385,9 @@ function LightEditor({ obj }: { obj: SceneObject }) {
       <Field label="Type">
         <SelectInput
           value={obj.lightType || "point"}
-          onChange={(v) => updateObjectGeneral(obj.id, { lightType: v as any })}
+          onChange={(v) =>
+            updateObjectGeneral(obj.id, { lightType: v as LightType })
+          }
           options={[
             { value: "ambient", label: "Ambient" },
             { value: "directional", label: "Directional" },

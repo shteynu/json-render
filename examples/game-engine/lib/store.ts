@@ -7,14 +7,6 @@ import type {
   ObjectType,
   TransformMode,
   ViewMode,
-  Material,
-  Physics,
-  Character,
-  Sound,
-  Media,
-  Damage,
-  SceneSettings,
-  EnvironmentSettings,
 } from "./types";
 import {
   createDefaultScene,

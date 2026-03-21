@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { RigidBody, CuboidCollider } from "@react-three/rapier";
 import * as THREE from "three";
 import { useEditorStore } from "@/lib/store";
 
@@ -30,9 +29,6 @@ export function GameCharacter({
   rotation,
   scale,
   modelUrl,
-  role,
-  physics,
-  objectId,
 }: GameCharacterProps) {
   const isPlaying = useEditorStore((s) => s.isPlaying);
   const pos: [number, number, number] = position ?? [0, 0, 0];

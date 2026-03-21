@@ -183,11 +183,11 @@ function specElementToSceneObject(
   if (props.q != null) obj.q = props.q as number;
 
   if (props.shapeData && typeof props.shapeData === "object") {
-    obj.shapeData = props.shapeData as any;
+    obj.shapeData = props.shapeData as SceneObject["shapeData"];
   }
 
   if (props.meshData && typeof props.meshData === "object") {
-    obj.meshData = props.meshData as any;
+    obj.meshData = props.meshData as SceneObject["meshData"];
   }
 
   if (element.type === "GroundPlane") {
