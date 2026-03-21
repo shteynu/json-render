@@ -4,7 +4,7 @@ import { useMemo, useEffect, Suspense, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { ThreeRenderer } from "@json-render/react-three-fiber";
-import { PanelLeft, PanelRight, X } from "lucide-react";
+import { Braces, SlidersHorizontal, X } from "lucide-react";
 import { useEditorStore } from "@/lib/store";
 import { useIsMobile } from "@/lib/use-mobile";
 import { registry } from "@/lib/registry";
@@ -99,25 +99,28 @@ export function GameEngine() {
   const showSidebars = !isPlaying;
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#0a0a0a] overflow-hidden">
+    <div className="h-dvh w-screen flex flex-col bg-[#0a0a0a] overflow-hidden">
       <Toolbar />
 
       <div className="flex flex-1 min-h-0 relative">
-        {/* Left sidebar - JSON Pane */}
-        {showSidebars && !isMobile && (
-          <div className="w-72 shrink-0 border-r border-[#1e1e1e] bg-[#0f0f0f] overflow-hidden">
+        {/* Left sidebar - JSON Pane (desktop only) */}
+        {showSidebars && (
+          <div className="hidden sm:block w-72 shrink-0 border-r border-[#1e1e1e] bg-[#0f0f0f] overflow-hidden">
             <JsonPane />
           </div>
         )}
 
         {/* Mobile left drawer */}
-        {showSidebars && isMobile && leftDrawer && (
+        {showSidebars && (
           <>
             <div
-              className="fixed inset-0 bg-black/50 z-30"
+              className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-200 ${leftDrawer ? "opacity-100" : "opacity-0 pointer-events-none"}`}
               onClick={() => setLeftDrawer(false)}
             />
-            <div className="fixed left-0 top-10 bottom-0 w-72 max-w-[85vw] bg-[#0f0f0f] border-r border-[#1e1e1e] z-40 overflow-hidden">
+            <div
+              className={`fixed left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-[#0f0f0f] border-r border-[#1e1e1e] z-40 overflow-hidden transition-transform duration-200 ease-out ${leftDrawer ? "translate-x-0" : "-translate-x-full"}`}
+              style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+            >
               <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e1e1e]">
                 <span className="text-[10px] font-semibold text-[#666] uppercase tracking-wider">
                   JSON Spec
@@ -135,12 +138,12 @@ export function GameEngine() {
         )}
 
         {/* Canvas area */}
-        <div className="flex-1 relative min-w-0">
+        <div className="flex-1 relative min-w-0 safe-bottom">
           <DropZone />
           <Canvas
             shadows
             camera={{ position: [5, 5, 5], fov: 50 }}
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: "100%", height: "100%", touchAction: "none" }}
           >
             <Suspense fallback={null}>
               {isPlaying ? (
@@ -158,19 +161,19 @@ export function GameEngine() {
           </Canvas>
 
           {/* Mobile drawer toggle buttons */}
-          {showSidebars && isMobile && (
+          {showSidebars && (
             <>
               <button
                 onClick={() => setLeftDrawer(true)}
-                className="absolute top-2 left-2 z-10 w-10 h-10 flex items-center justify-center rounded-lg bg-black/50 backdrop-blur-sm text-white/70 active:bg-white/20"
+                className="sm:hidden absolute top-2 left-2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 active:bg-white/30 text-white transition-colors backdrop-blur-sm"
               >
-                <PanelLeft size={18} />
+                <Braces size={18} />
               </button>
               <button
                 onClick={() => setRightDrawer(true)}
-                className="absolute top-2 right-2 z-10 w-10 h-10 flex items-center justify-center rounded-lg bg-black/50 backdrop-blur-sm text-white/70 active:bg-white/20"
+                className="sm:hidden absolute top-2 right-2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 active:bg-white/30 text-white transition-colors backdrop-blur-sm"
               >
-                <PanelRight size={18} />
+                <SlidersHorizontal size={18} />
               </button>
             </>
           )}
@@ -191,21 +194,24 @@ export function GameEngine() {
           <DeathSound />
         </div>
 
-        {/* Right sidebar - Inspector */}
-        {showSidebars && !isMobile && (
-          <div className="w-72 shrink-0 border-l border-[#1e1e1e] bg-[#0f0f0f] overflow-y-auto">
+        {/* Right sidebar - Inspector (desktop only) */}
+        {showSidebars && (
+          <div className="hidden sm:block w-72 shrink-0 border-l border-[#1e1e1e] bg-[#0f0f0f] overflow-y-auto">
             <SceneInspector />
           </div>
         )}
 
         {/* Mobile right drawer */}
-        {showSidebars && isMobile && rightDrawer && (
+        {showSidebars && (
           <>
             <div
-              className="fixed inset-0 bg-black/50 z-30"
+              className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-200 ${rightDrawer ? "opacity-100" : "opacity-0 pointer-events-none"}`}
               onClick={() => setRightDrawer(false)}
             />
-            <div className="fixed right-0 top-10 bottom-0 w-72 max-w-[85vw] bg-[#0f0f0f] border-l border-[#1e1e1e] z-40 overflow-y-auto">
+            <div
+              className={`fixed right-0 top-0 bottom-0 w-72 max-w-[85vw] bg-[#0f0f0f] border-l border-[#1e1e1e] z-40 overflow-y-auto transition-transform duration-200 ease-out ${rightDrawer ? "translate-x-0" : "translate-x-full"}`}
+              style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+            >
               <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e1e1e]">
                 <span className="text-[10px] font-semibold text-[#666] uppercase tracking-wider">
                   Inspector

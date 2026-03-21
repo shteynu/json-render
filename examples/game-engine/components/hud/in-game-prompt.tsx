@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect, useRef } from "react";
-import { ArrowUp, Loader2, Sparkles } from "lucide-react";
+import { ArrowUp, Loader2, MessageSquare } from "lucide-react";
 import { useEditorStore } from "@/lib/store";
 import { useIsMobile } from "@/lib/use-mobile";
 
@@ -209,7 +209,7 @@ export function InGamePrompt() {
           }}
           className="absolute top-14 right-3 z-30 w-11 h-11 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white/70 active:bg-white/20 border border-white/10"
         >
-          <Sparkles size={18} />
+          <MessageSquare size={18} />
         </button>
       );
     }
@@ -225,7 +225,7 @@ export function InGamePrompt() {
           className={`flex items-center gap-2 bg-black/70 backdrop-blur-md border border-white/20 ${isMobile ? "rounded-xl w-full" : "rounded-full"} shadow-lg overflow-hidden ${isMobile ? "" : "max-w-[600px]"}`}
         >
           <div className={isMobile ? "pl-3" : "pl-5"}>
-            <Sparkles className="h-5 w-5 text-white/70" />
+            <MessageSquare className="h-5 w-5 text-white/70" />
           </div>
           <form
             onSubmit={handleSubmit}
@@ -237,7 +237,7 @@ export function InGamePrompt() {
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
               placeholder="Describe what to add or change..."
-              className={`bg-transparent border-none px-3 py-4 ${isMobile ? "flex-1 min-w-0 text-sm" : "w-[400px] text-sm"} text-white placeholder-gray-400 focus:outline-none resize-none overflow-hidden min-h-[44px] max-h-[200px]`}
+              className={`bg-transparent border-none px-3 py-4 ${isMobile ? "flex-1 min-w-0 text-base" : "w-[400px] text-sm"} text-white placeholder-gray-400 focus:outline-none resize-none overflow-hidden min-h-[44px] max-h-[200px]`}
               rows={1}
               style={{ height: "auto" }}
             />

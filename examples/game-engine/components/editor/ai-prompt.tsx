@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useMemo } from "react";
-import { Sparkles, X, ArrowUp } from "lucide-react";
+import { MessageSquare, X, ArrowUp } from "lucide-react";
 import { deepMergeSpec } from "@json-render/core";
 import type { Spec } from "@json-render/core";
 import { parse } from "yaml";
@@ -155,7 +155,7 @@ export function AIPrompt() {
         className={`absolute bottom-4 right-4 z-10 ${isMobile ? "w-11 h-11" : "w-9 h-9"} flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white transition-colors backdrop-blur-sm`}
         title="AI Scene Editor"
       >
-        <Sparkles size={isMobile ? 18 : 16} />
+        <MessageSquare size={isMobile ? 18 : 16} />
       </button>
     );
   }
@@ -186,7 +186,7 @@ export function AIPrompt() {
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               placeholder="Describe scene changes..."
               disabled={isProcessing}
-              className={`flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded px-2.5 ${isMobile ? "py-2.5 text-sm" : "py-1.5 text-xs"} text-[#ccc] outline-none focus:border-[#555] placeholder:text-[#444] disabled:opacity-50`}
+              className={`flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded px-2.5 ${isMobile ? "py-2.5 text-base" : "py-1.5 text-xs"} text-[#ccc] outline-none focus:border-[#555] placeholder:text-[#444] disabled:opacity-50`}
             />
             <button
               onClick={handleSubmit}

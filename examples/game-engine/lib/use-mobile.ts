@@ -1,19 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
+function getIsMobile() {
+  return typeof window !== "undefined"
+    ? window.innerWidth < MOBILE_BREAKPOINT
+    : false;
+}
+
+function subscribe(callback: () => void) {
+  const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+  mql.addEventListener("change", callback);
+  window.addEventListener("resize", callback);
+  return () => {
+    mql.removeEventListener("change", callback);
+    window.removeEventListener("resize", callback);
+  };
+}
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const onChange = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    mql.addEventListener("change", onChange);
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-
-  return isMobile;
+  return useSyncExternalStore(subscribe, getIsMobile, () => false);
 }

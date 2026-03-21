@@ -282,14 +282,14 @@ function AnimatedCharacterModelInner({
       resetBoneScales(characterGltf.scene);
 
       characterRef.current.clear();
-      characterRef.current.add(characterGltf.scene.clone());
+      characterRef.current.add(characterGltf.scene.clone() as any);
 
       const mixer = new THREE.AnimationMixer(characterRef.current as any);
       mixerRef.current = mixer;
 
       if (idleGltf.animations[0] && walkGltf.animations[0]) {
-        const idleAction = mixer.clipAction(idleGltf.animations[0]);
-        const walkAction = mixer.clipAction(walkGltf.animations[0]);
+        const idleAction = mixer.clipAction(idleGltf.animations[0] as any);
+        const walkAction = mixer.clipAction(walkGltf.animations[0] as any);
         actionsRef.current = { idle: idleAction, walk: walkAction };
         idleAction.play();
         setReady(true);
