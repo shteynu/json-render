@@ -31,7 +31,8 @@ export function CharacterInteraction() {
       if (!camera) return;
 
       const cameraPos = new THREE.Vector3();
-      camera.getWorldPosition(cameraPos);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch
+      camera.getWorldPosition(cameraPos as any);
 
       const characters = objects.filter(
         (obj) => obj.type === "character" && obj.visible,
