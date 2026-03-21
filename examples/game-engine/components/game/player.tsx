@@ -91,6 +91,15 @@ function FirstPersonController({
   const isGameOver = health <= 0;
 
   useEffect(() => {
+    if (isMobile) {
+      camera.rotation.order = "YXZ";
+      camera.rotation.set(0, 0, 0);
+      touchYaw.current = 0;
+      touchPitch.current = 0;
+    }
+  }, [isMobile, camera]);
+
+  useEffect(() => {
     if (isMobile) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isPromptOpen || isGameOver) return;
@@ -346,6 +355,12 @@ function ThirdPersonController({
 
   const speed = 5;
   const isGameOver = health <= 0;
+
+  useEffect(() => {
+    if (isMobile) {
+      cameraAngle.current = 0;
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     if (isMobile) return;

@@ -34,7 +34,7 @@ export function Toolbar() {
 
   return (
     <div
-      className="relative flex items-center justify-between px-2 sm:px-3 border-b border-[#1e1e1e] bg-[#0f0f0f] shrink-0"
+      className="relative z-20 flex items-center justify-between px-2 sm:px-3 border-b border-[#1e1e1e] bg-[#0f0f0f] shrink-0"
       style={{ minHeight: 44, paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       {/* Left: Transform modes */}

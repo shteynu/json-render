@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useMemo } from "react";
-import { MessageSquare, X, ArrowUp } from "lucide-react";
+import { MessageSquare, X, ArrowUp, Loader2 } from "lucide-react";
 import { deepMergeSpec } from "@json-render/core";
 import type { Spec } from "@json-render/core";
 import { parse } from "yaml";
@@ -193,11 +193,18 @@ export function AIPrompt() {
               disabled={isProcessing || !prompt.trim()}
               className={`${isMobile ? "p-2.5" : "p-1.5"} rounded bg-white/10 hover:bg-white/20 active:bg-white/30 text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors`}
             >
-              <ArrowUp size={14} />
+              {isProcessing ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <ArrowUp size={14} />
+              )}
             </button>
           </div>
           {message && (
-            <div className="mt-2 text-[10px] text-[#666]">{message}</div>
+            <div className="mt-2 text-[10px] text-[#666] flex items-center gap-1.5">
+              {isProcessing && <Loader2 size={10} className="animate-spin" />}
+              {message}
+            </div>
           )}
         </div>
       </div>
