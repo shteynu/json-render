@@ -50,8 +50,9 @@ function ModelInner({
   const model = scene.clone();
 
   useEffect(() => {
-    model.traverse((node) => {
-      if ((node as THREE.Mesh).isMesh) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @types/three version mismatch
+    model.traverse((node: any) => {
+      if (node.isMesh) {
         node.castShadow = true;
         node.receiveShadow = true;
       }
