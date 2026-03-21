@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "json-render Game Engine",
+  title: "Game Engine | json-render",
   description:
-    "3D game engine powered by json-render specs and React Three Fiber",
+    "Build 3D worlds with AI. A scene editor and game runtime powered by json-render specs and React Three Fiber.",
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({
