@@ -306,7 +306,7 @@ export const standardComponentDefinitions = {
     example: {
       title: "package.json",
       subtitle: "Modified 2 hours ago",
-      leading: "📄",
+      leading: "*",
       trailing: "2.1 KB",
     },
   },
@@ -314,16 +314,13 @@ export const standardComponentDefinitions = {
   Card: {
     props: z.object({
       title: z.string().nullable(),
-      borderStyle: z
-        .enum(["single", "double", "round", "bold", "classic"])
-        .nullable(),
-      borderColor: z.string().nullable(),
+      backgroundColor: z.string().nullable(),
       padding: z.number().nullable(),
     }),
     slots: ["default"],
     description:
-      "Bordered container with optional title. Use for grouping related content with a visual boundary.",
-    example: { title: "Details", borderStyle: "round", padding: 1 },
+      "Shaded container with optional title. Renders as a filled background area for grouping related content. Default background is a subtle dark shade.",
+    example: { title: "Details", padding: 1 },
   },
 
   KeyValue: {
@@ -361,6 +358,74 @@ export const standardComponentDefinitions = {
     description:
       "Status message with colored icon. Default icons: info=ℹ, success=✔, warning=⚠, error=✖.",
     example: { text: "Build completed successfully", status: "success" },
+  },
+
+  Metric: {
+    props: z.object({
+      label: z.string(),
+      value: z.string(),
+      detail: z.string().nullable(),
+      trend: z.enum(["up", "down", "neutral"]).nullable(),
+    }),
+    slots: [],
+    description:
+      "Key metric display with prominent value and optional trend indicator. Use for important numbers that deserve visual emphasis (price, temperature, stars, market cap).",
+    example: {
+      label: "Price",
+      value: "$70,686",
+      detail: "24h change",
+      trend: "up",
+    },
+  },
+
+  Callout: {
+    props: z.object({
+      type: z.enum(["info", "tip", "warning", "important"]).nullable(),
+      title: z.string().nullable(),
+      content: z.string(),
+    }),
+    slots: [],
+    description:
+      "Highlighted callout block with colored left border. Use for key takeaways, tips, warnings, or important notes that should stand out from surrounding content.",
+    example: {
+      type: "tip",
+      title: "Key Takeaway",
+      content:
+        "Revenue peaked in FY2022 driven by iPhone 13/14 upgrade cycles.",
+    },
+  },
+
+  Timeline: {
+    props: z.object({
+      items: z.array(
+        z.object({
+          title: z.string(),
+          description: z.string().nullable(),
+          date: z.string().nullable(),
+          status: z.enum(["completed", "current", "upcoming"]).nullable(),
+        }),
+      ),
+    }),
+    slots: [],
+    description:
+      "Vertical timeline showing ordered events, steps, or milestones. Each item has a status-colored dot, title, optional date, and optional description.",
+    example: {
+      items: [
+        {
+          title: "Project Started",
+          description: "Initial commit and setup",
+          date: "Jan 2024",
+          status: "completed",
+        },
+        {
+          title: "Beta Release",
+          description: "Public beta launched",
+          date: "Mar 2024",
+          status: "current",
+        },
+        { title: "v1.0", date: "Q2 2024", status: "upcoming" },
+      ],
+    },
   },
 
   // ==========================================================================
@@ -468,9 +533,9 @@ export const standardComponentDefinitions = {
       "Tab bar navigation. Navigate with left/right arrow keys. Use $bindState on value to bind the active tab to state. Place child content inside and use visible conditions on children to show content for the active tab.",
     example: {
       tabs: [
-        { label: "Overview", value: "overview", icon: "📊" },
-        { label: "Logs", value: "logs", icon: "📋" },
-        { label: "Settings", value: "settings", icon: "⚙" },
+        { label: "Overview", value: "overview" },
+        { label: "Logs", value: "logs" },
+        { label: "Settings", value: "settings" },
       ],
     },
   },

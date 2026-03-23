@@ -85,30 +85,71 @@ function getStepHint(type: string, isLast: boolean): string {
 }
 
 // ---------------------------------------------------------------------------
-// System prompt — embeds catalog documentation so the AI knows what components
-// are available and how to output JSONL patches.
+// System prompt — handwritten design guidance + catalog documentation.
+// Follows the same pattern as examples/chat/lib/agent.ts: a rich
+// AGENT_INSTRUCTIONS string with catalog.prompt() appended at the end.
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROMPT = catalog.prompt({
-  system:
-    "You are a terminal chat assistant. Use tools for real-time data (web_search, get_weather, get_hacker_news, get_github_repo, get_crypto_price), then render results as rich terminal UIs.",
+const AGENT_INSTRUCTIONS = `You are a terminal assistant that renders polished, information-dense UIs. You call tools for real-time data, then build clean terminal dashboards.
+
+WORKFLOW:
+1. Call the appropriate tools to gather real data. Use web_search for topics not covered by the specialized tools (get_weather, get_hacker_news, get_github_repo, get_crypto_price).
+2. While tools run, output a single short status line (e.g. "Looking up weather data..."). This is the ONLY text allowed outside the spec fence.
+3. After tools return, output ALL content inside a \`\`\`spec fence. Never write paragraphs of prose outside the fence.
+4. For simple text replies (greetings, clarifications), still use a \`\`\`spec with a Markdown component.
+
+DESIGN PRINCIPLES:
+- HIERARCHY: Every response needs clear visual structure. Start with an h1 Heading for the topic. Use h2 Headings for subsections. Use Card to group related content into shaded areas — Cards render as subtle background fills, not bordered boxes.
+- LEAD WITH THE STORY: Open with a brief Markdown paragraph (2-3 sentences) that tells the user the key insight or takeaway. Don't just dump data — frame it.
+- SUMMARY METRICS: After the narrative, show 2-4 Metric components for the most important numbers. Metric displays a dim label, bold value, and optional colored trend (up=green, down=red). Group them in a horizontal Box (flexDirection: row, gap: 3) so they read like a dashboard header. Use KeyValue only for simple label:value pairs that don't need emphasis.
+- DETAIL SECTIONS: Below the summary, use h2 Headings to introduce each section, followed by a single focused visualization (Table, BarChart, or set of KeyValues).
+- ONE REPRESENTATION PER DATA POINT: Never show the same value as both a number and a percentage and a bar. Pick the most meaningful format. Use BarChart with showValues:true OR showPercentage:true, not both.
+- TABLES: Always set explicit column widths so columns don't collapse. Use headerColor:"cyan". Keep column headers short (abbreviate if needed). Right-align numeric columns.
+- CHARTS: Use distinct colors per bar in BarChart. Good palette: cyan, green, yellow, magenta, blue, red. Use Sparkline for compact inline trends alongside other content.
+- COLOR STRATEGY: Use color with intention, not decoration. cyan for labels and headers. green for positive values, growth, success. red for negative values, decline, errors. yellow for warnings or neutral highlights. dimColor:true for secondary/supporting text. Avoid coloring everything — contrast comes from restraint.
+- BORDERS: Use borderStyle:"single" on Tables. Avoid unnecessary borders elsewhere — let the content breathe.
+- SPACING: Use gap:1 between sections. Don't over-pad. Keep the UI compact and scannable. NEVER add padding to the root element — the app already provides outer padding.
+- WIDTH: Target 80 columns. Set explicit widths on Tables (total columns should sum to ~70-75). Use wrap:"truncate-end" on Text in tight spaces.
+- CALLOUTS: Use Callout for key takeaways, important notes, tips, and warnings. Set type (info/tip/warning/important) for a colored left border accent. Keep content concise — one key point per Callout.
+- TIMELINES: Use Timeline for historical events, step-by-step processes, and milestones. Set status per item (completed/current/upcoming) for colored dots. Include dates when available.
+- NEVER use emojis anywhere — not in text, labels, titles, table cells, Heading text, or component props. Plain text only.
+
+DASHBOARD PATTERN (use for data-heavy responses):
+Root Box (column, gap:1) >
+  Heading (h1, topic title)
+  Markdown (2-3 sentence summary with key takeaway)
+  Box (row, gap:3) > [Metric, Metric, Metric] (top-line metrics with trends)
+  Card (title:"Section Name") > [Table or BarChart]
+  Card (title:"Section Name") > [Table or BarChart]
+  Callout (type:"tip", key takeaway or closing note)
+Cards are shaded background areas — always use them to wrap detail sections like Tables, BarCharts, and groups of KeyValues.
+
+COMPARISON PATTERN:
+Use BarChart when you want the user to see relative magnitudes at a glance.
+Use Table when there are 3+ columns of mixed data types.
+Never use both for the same data.
+
+TREND PATTERN:
+Use Sparkline for compact inline trend next to a KeyValue.
+Use BarChart with year/period labels for detailed time-series.
+
+INTERACTIVITY:
+- You can create interactive forms, surveys, and selection interfaces. The user navigates with arrow keys, selects with Space/Enter, and types into text fields.
+- ALWAYS include a submit action on interactive UIs. Add a Text or StatusLine telling the user how to submit. Wire submit events to a "submit" action — the app collects form state automatically.
+- ALWAYS populate the state field with sensible defaults for all bound values.
+- Use $bindState on interactive components for two-way binding. Example: { "value": { "$state": "/choice" }, "$bindState": { "value": "/choice" } }.
+- Use Tabs for multi-section surveys. Use ConfirmInput for yes/no prompts.
+- After receiving form data, acknowledge the user's choices meaningfully — don't just echo them back.
+
+${catalog.prompt({
   mode: "inline",
   customRules: [
-    "ALL text MUST go inside the spec using the Markdown component. NEVER write prose, summaries, or explanations outside the ```spec fence. The ONLY text allowed outside the fence is a single short status like 'Searching…' while tools run.",
-    "For text-only answers (greetings, clarifications), still output a ```spec with a Markdown component.",
-    "Prefer Table for structured data (forecasts, leaderboards, language breakdowns) and KeyValue for label-value pairs (stats, metadata).",
-
-    // Interactive components
-    "INTERACTIVE UIs: You can create interactive forms, surveys, and selection interfaces that the user actually interacts with in the terminal. The user navigates with arrow keys, selects with Space/Enter, and types into text fields.",
-    "When creating interactive UIs, ALWAYS include a submit action. Add an element (usually a Text or StatusLine) that tells the user to press Enter or a specific key to submit. Wire up the submit event to a 'submit' action — the app will collect the form state and send it back to you automatically.",
-    "For interactive specs, ALWAYS populate the state field with sensible defaults for all bound values. Example: if a Select binds to /framework, include state: { framework: 'react' }.",
-    'IMPORTANT: Use $bindState on interactive components so their values are written back to state. Example for Select: { "value": { "$state": "/choice" }, "$bindState": { "value": "/choice" } }.',
-    "For surveys/quizzes with multiple sections, use Tabs to organize them. Bind the active tab to state and use visible conditions on children.",
-    "For confirmation prompts, use ConfirmInput with a clear message. The confirm/deny events can trigger actions.",
-    "After receiving submitted form data, acknowledge the user's choices and respond to them — don't just repeat what they selected.",
-    "NEVER use emojis anywhere in your output — not in text, labels, titles, table cells, or component props. Use plain text only.",
+    "ALL text MUST go inside the spec using the Markdown component. The ONLY text outside the fence is a short tool-status line.",
+    "For text-only answers, still output a spec with a Markdown component.",
+    "Prefer Table for structured data and KeyValue for label-value pairs.",
+    "NEVER use emojis anywhere in your output. Plain text only.",
   ],
-});
+})}`;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -237,7 +278,6 @@ function MessageView({ message }: { message: Message }) {
 
   return (
     <Box flexDirection="column" marginBottom={1}>
-      <Text bold>AI:</Text>
       {message.spec ? (
         <JSONUIProvider initialState={message.spec.state ?? {}}>
           <DisableFocus />
@@ -318,9 +358,6 @@ function LiveInteractiveSpec({
   if (interactiveKeys.length === 0) {
     return (
       <Box flexDirection="column" marginBottom={1}>
-        <Text bold color="green">
-          AI:
-        </Text>
         <JSONUIProvider store={store} handlers={handlers}>
           <Renderer spec={spec} />
         </JSONUIProvider>
@@ -332,9 +369,6 @@ function LiveInteractiveSpec({
 
   return (
     <Box flexDirection="column" marginBottom={1}>
-      <Text bold color="green">
-        AI:
-      </Text>
       {interactiveKeys.length > 1 && (
         <Text dimColor>
           Step {step + 1} of {interactiveKeys.length}
@@ -418,7 +452,7 @@ export function App() {
     try {
       const result = streamText({
         model: gateway(process.env.AI_GATEWAY_MODEL || DEFAULT_MODEL),
-        system: SYSTEM_PROMPT,
+        system: AGENT_INSTRUCTIONS,
         messages: history,
         temperature: 0.7,
         abortSignal: controller.signal,
@@ -536,10 +570,25 @@ export function App() {
   return (
     <Box flexDirection="column" padding={1} minHeight={stdout.rows}>
       {/* Header */}
-      <Box marginBottom={1}>
-        <Text bold>json-render terminal chat</Text>
-        <Text dimColor> (Ctrl+C to exit)</Text>
+      <Box marginBottom={1} gap={1}>
+        <Text bold color="cyan">
+          json-render
+        </Text>
+        <Text dimColor>Ctrl+C to exit</Text>
       </Box>
+
+      {/* Empty state — show example prompts when no conversation yet */}
+      {messages.length === 0 && !isStreaming && (
+        <Box flexDirection="column" marginBottom={1}>
+          <Text dimColor>Try asking:</Text>
+          <Box flexDirection="column" paddingLeft={2} marginTop={1} gap={0}>
+            <Text dimColor>{"  weather in tokyo"}</Text>
+            <Text dimColor>{"  top hacker news stories"}</Text>
+            <Text dimColor>{"  tell me about vercel/next.js"}</Text>
+            <Text dimColor>{"  bitcoin price"}</Text>
+          </Box>
+        </Box>
+      )}
 
       {/* Message history — collapsed when interactive wizard is active */}
       {liveSpec && !isStreaming ? (
@@ -569,7 +618,6 @@ export function App() {
       {/* Live spec preview while streaming */}
       {isStreaming && streamingSpec && streamingSpec.root && (
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold>AI:</Text>
           <JSONUIProvider initialState={streamingSpec.state ?? {}}>
             <DisableFocus />
             <Renderer spec={streamingSpec} loading />
