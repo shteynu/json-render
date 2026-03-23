@@ -259,11 +259,12 @@ export const standardComponentDefinitions = {
       borderStyle: z
         .enum(["single", "double", "round", "bold", "classic"])
         .nullable(),
+      backgroundColor: z.string().nullable(),
       headerColor: z.string().nullable(),
     }),
     slots: [],
     description:
-      "Tabular data display with headers and rows. Each row is a record mapping column keys to string values.",
+      "Tabular data display with headers and rows. Each row is a record mapping column keys to string values. Set both borderStyle and backgroundColor together so borders share the same shading.",
     example: {
       columns: [
         { header: "Name", key: "name", width: 20 },

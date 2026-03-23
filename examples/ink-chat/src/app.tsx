@@ -107,7 +107,7 @@ DESIGN PRINCIPLES:
 - TABLES: Always set explicit column widths so columns don't collapse. Use headerColor:"cyan". Keep column headers short (abbreviate if needed). Right-align numeric columns.
 - CHARTS: Use distinct colors per bar in BarChart. Good palette: cyan, green, yellow, magenta, blue, red. Use Sparkline for compact inline trends alongside other content.
 - COLOR STRATEGY: Use color with intention, not decoration. cyan for labels and headers. green for positive values, growth, success. red for negative values, decline, errors. yellow for warnings or neutral highlights. dimColor:true for secondary/supporting text. Avoid coloring everything — contrast comes from restraint.
-- BORDERS: Use borderStyle:"single" on Tables. Avoid unnecessary borders elsewhere — let the content breathe.
+- TABLES WITH SHADING: When using borderStyle on a Table, always set backgroundColor too (e.g. backgroundColor:"#1a1a1a") so the border characters share the same shading. This avoids visual gaps.
 - SPACING: Use gap:1 between sections. Don't over-pad. Keep the UI compact and scannable. NEVER add padding to the root element — the app already provides outer padding.
 - WIDTH: Target 80 columns. Set explicit widths on Tables (total columns should sum to ~70-75). Use wrap:"truncate-end" on Text in tight spaces.
 - CALLOUTS: Use Callout for key takeaways, important notes, tips, and warnings. Set type (info/tip/warning/important) for a colored left border accent. Keep content concise — one key point per Callout.

@@ -325,6 +325,7 @@ function TableComponent({ element }: ComponentRenderProps) {
     }>;
     rows?: Array<Record<string, string>>;
     borderStyle?: string;
+    backgroundColor?: string;
     headerColor?: string;
   };
 
@@ -363,7 +364,11 @@ function TableComponent({ element }: ComponentRenderProps) {
     | undefined;
 
   return (
-    <Box flexDirection="column" borderStyle={borderStyleProp}>
+    <Box
+      flexDirection="column"
+      borderStyle={borderStyleProp}
+      backgroundColor={p.backgroundColor}
+    >
       {/* Header */}
       <Box>
         {columns.map((col, i) => (
