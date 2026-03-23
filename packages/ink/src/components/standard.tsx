@@ -375,15 +375,19 @@ function TableComponent({ element }: ComponentRenderProps) {
       {/* Separator */}
       <Text dimColor>{colWidths.map((w) => "─".repeat(w)).join("─")}</Text>
       {/* Rows */}
-      {rows.map((row, rowIdx) => (
-        <Box key={rowIdx}>
-          {columns.map((col, i) => (
-            <Text key={col.key}>
-              {padCell(row[col.key] || "—", colWidths[i]!, col.align)}
-            </Text>
-          ))}
-        </Box>
-      ))}
+      {rows.map((row, rowIdx) => {
+        const rowKey =
+          columns.map((c) => row[c.key] ?? "").join("\0") || String(rowIdx);
+        return (
+          <Box key={rowKey} gap={0}>
+            {columns.map((col, i) => (
+              <Text key={col.key}>
+                {padCell(row[col.key] || "—", colWidths[i]!, col.align)}
+              </Text>
+            ))}
+          </Box>
+        );
+      })}
     </Box>
   );
 }
@@ -402,7 +406,7 @@ function ListComponent({ element }: ComponentRenderProps) {
   return (
     <Box flexDirection="column" gap={p.spacing ?? 0}>
       {items.map((item, i) => (
-        <Box key={i} gap={1}>
+        <Box key={`${i}:${item}`} gap={1}>
           <Text dimColor>{p.ordered ? `${i + 1}.` : bullet}</Text>
           <Text>{item}</Text>
         </Box>
@@ -541,6 +545,16 @@ function StatusLineComponent({ element }: ComponentRenderProps) {
 // Interactive Components
 // =============================================================================
 
+/** Count code points instead of UTF-16 code units (handles emoji/surrogate pairs). */
+function codePointLength(s: string): number {
+  return Array.from(s).length;
+}
+
+/** Slice by code point index instead of UTF-16 offset. */
+function codePointSlice(s: string, start: number, end?: number): string {
+  return Array.from(s).slice(start, end).join("");
+}
+
 function TextInputComponent({ element, emit, bindings }: ComponentRenderProps) {
   const p = element.props as {
     placeholder?: string;
@@ -556,11 +570,11 @@ function TextInputComponent({ element, emit, bindings }: ComponentRenderProps) {
   );
 
   const currentValue = value ?? "";
-  const [cursorPos, setCursorPos] = useState(currentValue.length);
+  const [cursorPos, setCursorPos] = useState(codePointLength(currentValue));
 
   // Keep cursor in bounds when value changes externally
   useEffect(() => {
-    setCursorPos((prev) => Math.min(prev, currentValue.length));
+    setCursorPos((prev) => Math.min(prev, codePointLength(currentValue)));
   }, [currentValue]);
 
   useInput(
@@ -573,8 +587,8 @@ function TextInputComponent({ element, emit, bindings }: ComponentRenderProps) {
       if (key.backspace || key.delete) {
         if (cursorPos > 0) {
           const newVal =
-            currentValue.slice(0, cursorPos - 1) +
-            currentValue.slice(cursorPos);
+            codePointSlice(currentValue, 0, cursorPos - 1) +
+            codePointSlice(currentValue, cursorPos);
           setValue(newVal);
           setCursorPos((prev) => prev - 1);
           emit("change");
@@ -588,7 +602,9 @@ function TextInputComponent({ element, emit, bindings }: ComponentRenderProps) {
         return;
       }
       if (key.rightArrow) {
-        setCursorPos((prev) => Math.min(currentValue.length, prev + 1));
+        setCursorPos((prev) =>
+          Math.min(codePointLength(currentValue), prev + 1),
+        );
         return;
       }
 
@@ -598,11 +614,11 @@ function TextInputComponent({ element, emit, bindings }: ComponentRenderProps) {
 
       if (input) {
         const newVal =
-          currentValue.slice(0, cursorPos) +
+          codePointSlice(currentValue, 0, cursorPos) +
           input +
-          currentValue.slice(cursorPos);
+          codePointSlice(currentValue, cursorPos);
         setValue(newVal);
-        setCursorPos((prev) => prev + input.length);
+        setCursorPos((prev) => prev + codePointLength(input));
         emit("change");
       }
     },
@@ -611,13 +627,12 @@ function TextInputComponent({ element, emit, bindings }: ComponentRenderProps) {
 
   const displayValue = currentValue
     ? p.mask
-      ? p.mask.repeat(currentValue.length)
+      ? p.mask.repeat(codePointLength(currentValue))
       : currentValue
     : "";
 
-  // Render with cursor position indicator
-  const before = displayValue.slice(0, cursorPos);
-  const after = displayValue.slice(cursorPos);
+  const before = codePointSlice(displayValue, 0, cursorPos);
+  const after = codePointSlice(displayValue, cursorPos);
 
   return (
     <Box gap={1}>

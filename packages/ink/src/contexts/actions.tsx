@@ -101,8 +101,8 @@ export interface PendingConfirmation {
 export interface ActionContextValue {
   /** Registered action handlers */
   handlers: Record<string, ActionHandler>;
-  /** Actions currently executing (for loading indicators) */
-  loadingActions: Set<string>;
+  /** Actions currently executing (count of in-flight executions per action name) */
+  loadingActions: Map<string, number>;
   /** Pending confirmation dialog */
   pendingConfirmation: PendingConfirmation | null;
   /** Execute an action binding */
@@ -141,7 +141,9 @@ export function ActionProvider({
   initialHandlersRef.current = initialHandlers;
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
-  const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
+  const [loadingActions, setLoadingActions] = useState<Map<string, number>>(
+    new Map(),
+  );
   const [pendingConfirmation, setPendingConfirmation] =
     useState<PendingConfirmation | null>(null);
   // Ref tracks current pending confirmation so overlapping confirms can
@@ -267,7 +269,11 @@ export function ActionProvider({
       }
 
       const actionName = resolved.action;
-      setLoadingActions((prev) => new Set(prev).add(actionName));
+      setLoadingActions((prev) => {
+        const next = new Map(prev);
+        next.set(actionName, (next.get(actionName) ?? 0) + 1);
+        return next;
+      });
       try {
         await executeAction({
           action: resolved,
@@ -281,8 +287,13 @@ export function ActionProvider({
         });
       } finally {
         setLoadingActions((prev) => {
-          const next = new Set(prev);
-          next.delete(actionName);
+          const next = new Map(prev);
+          const count = (next.get(actionName) ?? 1) - 1;
+          if (count <= 0) {
+            next.delete(actionName);
+          } else {
+            next.set(actionName, count);
+          }
           return next;
         });
       }
@@ -343,7 +354,7 @@ export function useAction(binding: ActionBinding): {
 } {
   const { execute, loadingActions } = useActions();
   const executeAction = useCallback(() => execute(binding), [execute, binding]);
-  const isLoading = loadingActions.has(binding.action);
+  const isLoading = (loadingActions.get(binding.action) ?? 0) > 0;
   return { execute: executeAction, isLoading };
 }
 

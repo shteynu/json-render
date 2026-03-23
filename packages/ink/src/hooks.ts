@@ -99,7 +99,7 @@ function parsePatchLine(line: string): ParseResult {
   // Recovery: strip trailing extra braces/brackets one at a time
   // LLMs commonly generate extra closing characters in nested JSON
   let attempt = trimmed;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 8; i++) {
     const last = attempt[attempt.length - 1];
     if (last === "}" || last === "]") {
       attempt = attempt.slice(0, -1);

@@ -275,7 +275,8 @@ export const getGitHubRepo = tool({
       const languageBreakdown = Object.entries(languages)
         .map(([lang, bytes]) => ({
           language: lang,
-          percentage: Math.round((bytes / totalBytes) * 100),
+          percentage:
+            totalBytes > 0 ? Math.round((bytes / totalBytes) * 100) : 0,
         }))
         .sort((a, b) => b.percentage - a.percentage)
         .slice(0, 6);

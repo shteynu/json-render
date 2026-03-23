@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { Text } from "ink";
 import type {
   UIElement,
   Spec,
@@ -268,6 +269,9 @@ const ElementRenderer = React.memo(function ElementRenderer({
           console.warn(
             `[json-render] Missing element "${childKey}" referenced as child of "${resolvedElement.type}". This element will not render.`,
           );
+          return (
+            <Text key={childKey} color="red">{`[Missing: ${childKey}]`}</Text>
+          );
         }
         return null;
       }
@@ -345,6 +349,12 @@ function RepeatChildren({
                 if (!loading) {
                   console.warn(
                     `[json-render] Missing element "${childKey}" referenced as child of "${element.type}" (repeat). This element will not render.`,
+                  );
+                  return (
+                    <Text
+                      key={`${key}:${childKey}`}
+                      color="red"
+                    >{`[Missing: ${childKey}]`}</Text>
                   );
                 }
                 return null;
