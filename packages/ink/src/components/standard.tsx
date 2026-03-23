@@ -366,6 +366,7 @@ function TableComponent({ element }: ComponentRenderProps) {
   return (
     <Box
       flexDirection="column"
+      alignSelf="flex-start"
       borderStyle={borderStyleProp}
       backgroundColor={p.backgroundColor}
     >

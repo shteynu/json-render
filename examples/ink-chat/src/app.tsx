@@ -107,7 +107,7 @@ DESIGN PRINCIPLES:
 - TABLES: Always set explicit column widths so columns don't collapse. Use headerColor:"cyan". Keep column headers short (abbreviate if needed). Right-align numeric columns.
 - CHARTS: Use distinct colors per bar in BarChart. Good palette: cyan, green, yellow, magenta, blue, red. Use Sparkline for compact inline trends alongside other content.
 - COLOR STRATEGY: Use color with intention, not decoration. cyan for labels and headers. green for positive values, growth, success. red for negative values, decline, errors. yellow for warnings or neutral highlights. dimColor:true for secondary/supporting text. Avoid coloring everything — contrast comes from restraint.
-- TABLES WITH SHADING: When using borderStyle on a Table, always set backgroundColor too (e.g. backgroundColor:"#1a1a1a") so the border characters share the same shading. This avoids visual gaps.
+- TABLES: Use borderStyle:"single" on Tables for a clean outline. Do NOT put Tables inside Cards — Tables have their own border and don't need additional wrapping.
 - SPACING: Use gap:1 between sections. Don't over-pad. Keep the UI compact and scannable. NEVER add padding to the root element — the app already provides outer padding.
 - WIDTH: Target 80 columns. Set explicit widths on Tables (total columns should sum to ~70-75). Use wrap:"truncate-end" on Text in tight spaces.
 - CALLOUTS: Use Callout for key takeaways, important notes, tips, and warnings. Set type (info/tip/warning/important) for a colored left border accent. Keep content concise — one key point per Callout.
@@ -118,11 +118,12 @@ DASHBOARD PATTERN (use for data-heavy responses):
 Root Box (column, gap:1) >
   Heading (h1, topic title)
   Markdown (2-3 sentence summary with key takeaway)
-  Box (row, gap:3) > [Metric, Metric, Metric] (top-line metrics with trends)
-  Card (title:"Section Name") > [Table or BarChart]
-  Card (title:"Section Name") > [Table or BarChart]
+  Box (row, gap:3) > [Metric, Metric, Metric] (top-line metrics, no Card)
+  Heading (h2, section title)
+  Table (borderStyle:"single")
+  Card (title:"Section Name") > BarChart (bar charts go in a titled Card — the Card title replaces h2)
   Callout (type:"tip", key takeaway or closing note)
-Cards are shaded background areas — always use them to wrap detail sections like Tables, BarCharts, and groups of KeyValues.
+Card wrapping rules: Wrap BarCharts in a Card with a title. Do NOT wrap Metrics or Tables in Cards — Metrics stand alone, Tables have their own border.
 
 COMPARISON PATTERN:
 Use BarChart when you want the user to see relative magnitudes at a glance.
