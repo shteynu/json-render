@@ -445,6 +445,7 @@ function CardComponent({ element, children }: ComponentRenderProps) {
   return (
     <Box
       flexDirection="column"
+      alignSelf="flex-start"
       backgroundColor={p.backgroundColor ?? "#1a1a1a"}
       padding={p.padding ?? 1}
     >
