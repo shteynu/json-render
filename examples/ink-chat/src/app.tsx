@@ -106,6 +106,7 @@ const SYSTEM_PROMPT = catalog.prompt({
     "For surveys/quizzes with multiple sections, use Tabs to organize them. Bind the active tab to state and use visible conditions on children.",
     "For confirmation prompts, use ConfirmInput with a clear message. The confirm/deny events can trigger actions.",
     "After receiving submitted form data, acknowledge the user's choices and respond to them — don't just repeat what they selected.",
+    "NEVER use emojis anywhere in your output — not in text, labels, titles, table cells, or component props. Use plain text only.",
   ],
 });
 
@@ -571,7 +572,7 @@ export function App() {
           <Text bold>AI:</Text>
           <JSONUIProvider initialState={streamingSpec.state ?? {}}>
             <DisableFocus />
-            <Renderer spec={streamingSpec} />
+            <Renderer spec={streamingSpec} loading />
           </JSONUIProvider>
         </Box>
       )}
