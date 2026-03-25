@@ -73,7 +73,7 @@ export function Editor() {
       <div className="flex items-center justify-between px-4 h-12 border-b border-border bg-background shrink-0">
         <span className="text-sm font-semibold">Next Website Builder</span>
         <a
-          href="/website"
+          href="/"
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"

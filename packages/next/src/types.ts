@@ -128,13 +128,45 @@ export interface CreateNextAppOptions {
 }
 
 /**
+ * Data returned by getPageData for client-side rendering.
+ */
+export interface PageData {
+  /** Page element tree spec */
+  spec: Spec;
+  /** Initial state (merged from spec.state, global state, and loader data) */
+  initialState?: Record<string, unknown>;
+  /** Optional layout element tree spec */
+  layoutSpec?: Spec | null;
+}
+
+/**
  * The result of createNextApp — exports for Next.js route files.
  */
 export interface NextAppExports {
-  /** Async Server Component for page.tsx */
-  Page: (props: {
+  /**
+   * Resolve page data for a given set of params.
+   * Returns null if no route matches (caller should call notFound()).
+   *
+   * Use this in your Server Component page.tsx alongside a client wrapper
+   * that renders PageRenderer:
+   *
+   * ```tsx
+   * // app/[[...slug]]/page.tsx
+   * import { getPageData, generateMetadata, generateStaticParams } from "@/lib/app";
+   * import { WebsiteRenderer } from "./renderer";
+   *
+   * export { generateMetadata, generateStaticParams };
+   *
+   * export default async function Page({ params }) {
+   *   const data = await getPageData({ params });
+   *   if (!data) notFound();
+   *   return <WebsiteRenderer {...data} />;
+   * }
+   * ```
+   */
+  getPageData: (props: {
     params: Promise<{ slug?: string[] }>;
-  }) => Promise<React.ReactElement | null>;
+  }) => Promise<PageData | null>;
   /** generateMetadata function for page.tsx */
   generateMetadata: (props: {
     params: Promise<{ slug?: string[] }>;

@@ -1,13 +1,12 @@
-import React from "react";
 import { notFound } from "next/navigation";
 import type {
   NextAppSpec,
   CreateNextAppOptions,
   NextAppExports,
+  PageData,
 } from "./types";
 import { matchRoute, slugToPath, collectStaticParams } from "./router";
 import { resolveMetadata, type ResolvedMetadata } from "./metadata";
-import { PageRenderer } from "./page-renderer-client";
 
 /**
  * Resolve the spec from the options — supports both static specs
@@ -41,7 +40,7 @@ function mergeState(
 /**
  * Create a fully wired Next.js application from a json-render spec.
  *
- * Returns `Page`, `generateMetadata`, and `generateStaticParams` exports
+ * Returns `getPageData`, `generateMetadata`, and `generateStaticParams`
  * ready to be used in Next.js `[[...slug]]` catch-all routes.
  *
  * @example
@@ -49,32 +48,41 @@ function mergeState(
  * // lib/app.ts
  * import { createNextApp } from "@json-render/next/server";
  *
- * export const app = createNextApp({
- *   spec,
- *   loaders: {
- *     loadPost: async ({ slug }) => {
- *       const post = await getPost(slug as string);
- *       return { post };
- *     },
- *   },
- * });
+ * export const { getPageData, generateMetadata, generateStaticParams } =
+ *   createNextApp({ spec });
  *
- * // app/[[...slug]]/page.tsx
- * export { Page as default, generateMetadata, generateStaticParams } from "@/lib/app";
+ * // app/[[...slug]]/page.tsx (Server Component)
+ * import { notFound } from "next/navigation";
+ * import { getPageData, generateMetadata, generateStaticParams } from "@/lib/app";
+ * import { SiteRenderer } from "./renderer";
+ *
+ * export { generateMetadata, generateStaticParams };
+ *
+ * export default async function Page({ params }) {
+ *   const data = await getPageData({ params });
+ *   if (!data) notFound();
+ *   return <SiteRenderer {...data} />;
+ * }
+ *
+ * // app/[[...slug]]/renderer.tsx ("use client")
+ * import { PageRenderer } from "@json-render/next";
+ * export function SiteRenderer(props) {
+ *   return <PageRenderer {...props} />;
+ * }
  * ```
  */
 export function createNextApp(options: CreateNextAppOptions): NextAppExports {
   const { spec: specOrFn, loaders } = options;
 
   /**
-   * Async Server Component that resolves the route, loads data,
-   * and renders the PageRenderer client component.
+   * Resolve page data for a given set of route params.
+   * Returns null when no route matches.
    */
-  async function Page({
+  async function getPageData({
     params,
   }: {
     params: Promise<{ slug?: string[] }>;
-  }): Promise<React.ReactElement | null> {
+  }): Promise<PageData | null> {
     const { slug } = await params;
     const pathname = slugToPath(slug);
     const spec = await resolveSpec(specOrFn);
@@ -82,7 +90,7 @@ export function createNextApp(options: CreateNextAppOptions): NextAppExports {
     const matched = matchRoute(spec, pathname);
 
     if (!matched) {
-      notFound();
+      return null;
     }
 
     const { route } = matched;
@@ -103,12 +111,12 @@ export function createNextApp(options: CreateNextAppOptions): NextAppExports {
         ? (spec.layouts[route.layout] ?? null)
         : null;
 
-    return React.createElement(PageRenderer, {
+    return {
       spec: route.page,
       initialState:
         Object.keys(initialState).length > 0 ? initialState : undefined,
       layoutSpec,
-    });
+    };
   }
 
   /**
@@ -136,5 +144,5 @@ export function createNextApp(options: CreateNextAppOptions): NextAppExports {
     return collectStaticParams(spec);
   }
 
-  return { Page, generateMetadata, generateStaticParams };
+  return { getPageData, generateMetadata, generateStaticParams };
 }

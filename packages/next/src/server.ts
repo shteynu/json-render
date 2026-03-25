@@ -35,6 +35,7 @@ export type {
   LoaderFn,
   CreateNextAppOptions,
   NextAppExports,
+  PageData,
 } from "./types";
 
 // Catalog types (type-only, no runtime)

@@ -48,6 +48,7 @@ export type {
   LoaderFn,
   CreateNextAppOptions,
   NextAppExports,
+  PageData,
 } from "./types";
 
 // Catalog types (re-exported from @json-render/react)

@@ -1,3 +1,5 @@
+"use client";
+
 import { NextAppProvider } from "@json-render/next";
 import { registry } from "@/lib/registry";
 
