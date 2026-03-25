@@ -93,7 +93,7 @@ export function Editor() {
               <JsonEditor
                 value={spec as unknown as JsonValue}
                 onChange={handleChange}
-                sidebarOpen={false}
+                sidebarOpen={true}
                 height="100%"
                 className="h-full"
                 style={

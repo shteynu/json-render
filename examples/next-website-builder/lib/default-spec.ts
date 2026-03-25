@@ -10,11 +10,7 @@ export const defaultSpec: NextAppSpec = {
     icons: "/icon.svg",
   },
 
-  state: {
-    contactName: "",
-    contactEmail: "",
-    contactMessage: "",
-  },
+  state: {},
 
   layouts: {
     main: {
@@ -22,74 +18,41 @@ export const defaultSpec: NextAppSpec = {
       elements: {
         wrapper: {
           type: "Stack",
-          props: { direction: "vertical", gap: "none" },
-          children: ["nav", "content", "footer"],
-        },
-
-        nav: {
-          type: "Stack",
           props: {
-            direction: "horizontal",
-            gap: "lg",
-            align: "center",
-            justify: "start",
-            className:
-              "px-8 py-4 border-b border-border bg-background sticky top-0 z-50",
+            direction: "vertical",
+            gap: "none",
+            align: "stretch",
+            className: "min-h-screen",
           },
-          children: [
-            "navBrand",
-            "navSpacer",
-            "navHome",
-            "navAbout",
-            "navContact",
-          ],
+          children: ["header", "content", "footer"],
         },
-        navBrand: {
-          type: "Heading",
-          props: { text: "Acme Inc", level: "h3" },
+        header: {
+          type: "Header",
+          props: {
+            brand: "Acme Inc",
+            links: [
+              { label: "Home", href: "/" },
+              { label: "About", href: "/about" },
+              { label: "Contact", href: "/contact" },
+            ],
+            variant: "simple",
+          },
         },
-        navSpacer: {
-          type: "Text",
-          props: { text: "", className: "flex-1" },
-        },
-        navHome: {
-          type: "Link",
-          props: { text: "Home", href: "/" },
-        },
-        navAbout: {
-          type: "Link",
-          props: { text: "About", href: "/about" },
-        },
-        navContact: {
-          type: "Link",
-          props: { text: "Contact", href: "/contact" },
-        },
-
         content: {
           type: "Slot",
           props: {},
         },
-
         footer: {
-          type: "Stack",
+          type: "Footer",
           props: {
-            direction: "vertical",
-            gap: "sm",
-            align: "center",
-            className: "px-8 py-12 border-t border-border bg-muted/30",
-          },
-          children: ["footerText", "footerCopy"],
-        },
-        footerText: {
-          type: "Text",
-          props: { text: "Built with json-render", variant: "muted" },
-        },
-        footerCopy: {
-          type: "Text",
-          props: {
-            text: "2026 Acme Inc. All rights reserved.",
-            variant: "muted",
-            className: "text-xs",
+            brand: "Acme Inc",
+            links: [
+              { label: "Home", href: "/" },
+              { label: "About", href: "/about" },
+              { label: "Contact", href: "/contact" },
+            ],
+            copyright: "2026 Acme Inc. All rights reserved.",
+            variant: "simple",
           },
         },
       },
@@ -104,87 +67,91 @@ export const defaultSpec: NextAppSpec = {
         description: "Welcome to Acme Inc - we build the future of software.",
       },
       page: {
-        root: "hero",
+        root: "page",
         elements: {
-          hero: {
+          page: {
             type: "Stack",
             props: {
               direction: "vertical",
-              gap: "xl",
-              align: "center",
-              className: "px-8 py-32 text-center max-w-4xl mx-auto",
+              gap: "none",
+              align: "stretch",
             },
-            children: [
-              "heroBadge",
-              "heroTitle",
-              "heroDesc",
-              "heroCta",
-              "features",
-            ],
+            children: ["hero", "features", "testimonials", "cta"],
           },
-          heroBadge: {
-            type: "Badge",
-            props: { text: "Now in Beta", variant: "secondary" },
-          },
-          heroTitle: {
-            type: "Heading",
+          hero: {
+            type: "Hero",
             props: {
-              text: "Build the future with Acme",
-              level: "h1",
-              className: "text-5xl font-bold tracking-tight",
+              headline: "Build the future with Acme",
+              description:
+                "We help companies ship better software, faster. Our platform provides the tools, infrastructure, and insights you need to build world-class products.",
+              primaryCta: { label: "Get Started", href: "/contact" },
+              secondaryCta: { label: "Learn More", href: "/about" },
+              badge: "Now in Beta",
+              variant: "centered",
             },
           },
-          heroDesc: {
-            type: "Text",
-            props: {
-              text: "We help companies ship better software, faster. Our platform provides the tools, infrastructure, and insights you need to build world-class products.",
-              variant: "muted",
-              className: "text-lg max-w-2xl",
-            },
-          },
-          heroCta: {
-            type: "Stack",
-            props: { direction: "horizontal", gap: "md", align: "center" },
-            children: ["ctaPrimary", "ctaSecondary"],
-          },
-          ctaPrimary: {
-            type: "Button",
-            props: { label: "Get Started", variant: "primary" },
-            on: { press: { action: "navigate", params: { href: "/contact" } } },
-          },
-          ctaSecondary: {
-            type: "Button",
-            props: { label: "Learn More", variant: "outline" },
-            on: { press: { action: "navigate", params: { href: "/about" } } },
-          },
-
           features: {
-            type: "Grid",
-            props: { columns: 3, gap: "lg", className: "mt-8 w-full" },
-            children: ["feat1", "feat2", "feat3"],
-          },
-          feat1: {
-            type: "Card",
+            type: "Features",
             props: {
-              title: "Lightning Fast",
+              headline: "Why Acme?",
               description:
-                "Optimized for speed with edge-first architecture and smart caching.",
+                "Everything you need to build, deploy, and scale your applications.",
+              items: [
+                {
+                  title: "Lightning Fast",
+                  description:
+                    "Optimized for speed with edge-first architecture and smart caching.",
+                },
+                {
+                  title: "Secure by Default",
+                  description:
+                    "Enterprise-grade security with end-to-end encryption and SOC 2 compliance.",
+                },
+                {
+                  title: "Developer First",
+                  description:
+                    "APIs, SDKs, and CLI tools designed to fit your workflow perfectly.",
+                },
+              ],
+              columns: 3,
+              variant: "cards",
             },
           },
-          feat2: {
-            type: "Card",
+          testimonials: {
+            type: "Testimonials",
             props: {
-              title: "Secure by Default",
-              description:
-                "Enterprise-grade security with end-to-end encryption and SOC 2 compliance.",
+              headline: "Trusted by industry leaders",
+              items: [
+                {
+                  quote:
+                    "Acme has completely transformed how we ship products. Our deployment time went from hours to minutes.",
+                  author: "Jordan Lee",
+                  role: "VP Engineering at Globex",
+                },
+                {
+                  quote:
+                    "The developer experience is unmatched. Our team onboarded in a single afternoon.",
+                  author: "Priya Patel",
+                  role: "CTO at Initech",
+                },
+                {
+                  quote:
+                    "We cut our infrastructure costs by 40% within the first quarter of switching to Acme.",
+                  author: "Sam Ortiz",
+                  role: "Head of Platform at Hooli",
+                },
+              ],
             },
           },
-          feat3: {
-            type: "Card",
+          cta: {
+            type: "CTA",
             props: {
-              title: "Developer First",
+              headline: "Ready to get started?",
               description:
-                "APIs, SDKs, and CLI tools designed to fit your workflow perfectly.",
+                "Join thousands of teams building better software with Acme.",
+              buttonLabel: "Contact Us",
+              buttonHref: "/contact",
+              variant: "banner",
             },
           },
         },
@@ -199,94 +166,90 @@ export const defaultSpec: NextAppSpec = {
           "Learn about our mission, values, and the team behind Acme.",
       },
       page: {
-        root: "about",
+        root: "page",
         elements: {
-          about: {
+          page: {
             type: "Stack",
             props: {
               direction: "vertical",
-              gap: "xl",
-              className: "px-8 py-20 max-w-4xl mx-auto",
+              gap: "none",
+              align: "stretch",
             },
-            children: ["aboutHeader", "aboutSep", "mission", "teamSection"],
+            children: ["hero", "features", "team", "cta"],
           },
-          aboutHeader: {
-            type: "Stack",
-            props: { direction: "vertical", gap: "md" },
-            children: ["aboutTitle", "aboutDesc"],
-          },
-          aboutTitle: {
-            type: "Heading",
+          hero: {
+            type: "Hero",
             props: {
-              text: "About Acme Inc",
-              level: "h1",
-              className: "text-4xl font-bold",
-            },
-          },
-          aboutDesc: {
-            type: "Text",
-            props: {
-              text: "Founded in 2024, Acme Inc is on a mission to make software development accessible to everyone. We believe the best tools should be simple, powerful, and delightful to use.",
-              variant: "muted",
-              className: "text-lg",
-            },
-          },
-          aboutSep: {
-            type: "Separator",
-            props: {},
-          },
-          mission: {
-            type: "Stack",
-            props: { direction: "vertical", gap: "md" },
-            children: ["missionTitle", "missionText"],
-          },
-          missionTitle: {
-            type: "Heading",
-            props: { text: "Our Mission", level: "h2" },
-          },
-          missionText: {
-            type: "Text",
-            props: {
-              text: "We are building a world where anyone can create professional-grade software without years of training. By combining AI with thoughtful design, we are lowering the barrier to entry while raising the ceiling of what is possible.",
-              variant: "muted",
-            },
-          },
-
-          teamSection: {
-            type: "Stack",
-            props: { direction: "vertical", gap: "lg" },
-            children: ["teamTitle", "teamGrid"],
-          },
-          teamTitle: {
-            type: "Heading",
-            props: { text: "The Team", level: "h2" },
-          },
-          teamGrid: {
-            type: "Grid",
-            props: { columns: 3, gap: "lg" },
-            children: ["member1", "member2", "member3"],
-          },
-          member1: {
-            type: "Card",
-            props: {
-              title: "Alex Chen",
-              description: "CEO & Co-founder. Previously at Vercel and Google.",
-            },
-          },
-          member2: {
-            type: "Card",
-            props: {
-              title: "Sarah Kim",
+              headline: "About Acme Inc",
               description:
-                "CTO & Co-founder. Built distributed systems at AWS.",
+                "Founded in 2024, we are on a mission to make software development accessible to everyone. We believe the best tools should be simple, powerful, and delightful to use.",
+              variant: "centered",
+              primaryCta: null,
+              secondaryCta: null,
+              badge: null,
             },
           },
-          member3: {
-            type: "Card",
+          features: {
+            type: "Features",
             props: {
-              title: "Marcus Rivera",
+              headline: "Our Values",
+              items: [
+                {
+                  title: "Simplicity",
+                  description:
+                    "We remove complexity so you can focus on building great products.",
+                },
+                {
+                  title: "Transparency",
+                  description:
+                    "Open communication, honest pricing, and clear documentation.",
+                },
+                {
+                  title: "Craftsmanship",
+                  description:
+                    "Every detail matters. We sweat the small stuff so you don't have to.",
+                },
+              ],
+              columns: 3,
+              variant: "simple",
+              description: null,
+            },
+          },
+          team: {
+            type: "Team",
+            props: {
+              headline: "Meet the Team",
               description:
-                "Head of Design. Former design lead at Figma and Stripe.",
+                "The people behind Acme who are passionate about building great developer tools.",
+              members: [
+                {
+                  name: "Alex Chen",
+                  role: "CEO & Co-founder",
+                  bio: "Previously at Vercel and Google. Passionate about developer experience.",
+                },
+                {
+                  name: "Sarah Kim",
+                  role: "CTO & Co-founder",
+                  bio: "Built distributed systems at AWS. Loves solving hard infrastructure problems.",
+                },
+                {
+                  name: "Marcus Rivera",
+                  role: "Head of Design",
+                  bio: "Former design lead at Figma and Stripe. Obsessed with clarity and craft.",
+                },
+              ],
+              variant: "grid",
+            },
+          },
+          cta: {
+            type: "CTA",
+            props: {
+              headline: "Want to join us?",
+              description:
+                "We are always looking for talented people to join our team.",
+              buttonLabel: "Get in Touch",
+              buttonHref: "/contact",
+              variant: "centered",
             },
           },
         },
@@ -300,79 +263,41 @@ export const defaultSpec: NextAppSpec = {
         description: "Get in touch with the Acme team.",
       },
       page: {
-        root: "contact",
+        root: "page",
         elements: {
-          contact: {
+          page: {
             type: "Stack",
             props: {
               direction: "vertical",
-              gap: "xl",
-              className: "px-8 py-20 max-w-2xl mx-auto",
+              gap: "none",
+              align: "stretch",
             },
-            children: ["contactHeader", "contactForm"],
+            children: ["form"],
           },
-          contactHeader: {
-            type: "Stack",
-            props: { direction: "vertical", gap: "md" },
-            children: ["contactTitle", "contactDesc"],
-          },
-          contactTitle: {
-            type: "Heading",
+          form: {
+            type: "ContactForm",
             props: {
-              text: "Get in Touch",
-              level: "h1",
-              className: "text-4xl font-bold",
-            },
-          },
-          contactDesc: {
-            type: "Text",
-            props: {
-              text: "Have a question or want to work with us? Fill out the form below and we will get back to you within 24 hours.",
-              variant: "muted",
-              className: "text-lg",
-            },
-          },
-          contactForm: {
-            type: "Card",
-            props: { title: null, description: null },
-            children: ["formStack"],
-          },
-          formStack: {
-            type: "Stack",
-            props: { direction: "vertical", gap: "md" },
-            children: ["nameInput", "emailInput", "messageInput", "submitBtn"],
-          },
-          nameInput: {
-            type: "Input",
-            props: {
-              label: "Name",
-              placeholder: "Your name",
-              statePath: "/contactName",
-            },
-          },
-          emailInput: {
-            type: "Input",
-            props: {
-              label: "Email",
-              placeholder: "you@example.com",
-              statePath: "/contactEmail",
-            },
-          },
-          messageInput: {
-            type: "Textarea",
-            props: {
-              label: "Message",
-              placeholder: "Tell us about your project...",
-              statePath: "/contactMessage",
-              rows: 5,
-            },
-          },
-          submitBtn: {
-            type: "Button",
-            props: {
-              label: "Send Message",
-              variant: "primary",
-              className: "w-full",
+              headline: "Get in Touch",
+              description:
+                "Have a question or want to work with us? Fill out the form below and we'll get back to you within 24 hours.",
+              fields: [
+                {
+                  label: "Name",
+                  type: "text" as const,
+                  placeholder: "Your name",
+                },
+                {
+                  label: "Email",
+                  type: "email" as const,
+                  placeholder: "you@example.com",
+                },
+                {
+                  label: "Message",
+                  type: "textarea" as const,
+                  placeholder: "Tell us about your project...",
+                },
+              ],
+              submitLabel: "Send Message",
             },
           },
         },
