@@ -7,7 +7,7 @@ import type {
 } from "./types";
 import { matchRoute, slugToPath, collectStaticParams } from "./router";
 import { resolveMetadata, type ResolvedMetadata } from "./metadata";
-import { PageRenderer } from "./components/page-renderer";
+import { PageRenderer } from "./page-renderer-client";
 
 /**
  * Resolve the spec from the options — supports both static specs
