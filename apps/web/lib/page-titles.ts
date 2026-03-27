@@ -54,6 +54,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "docs/api/image": "@json-render/image API",
   "docs/api/remotion": "@json-render/remotion API",
   "docs/api/shadcn": "@json-render/shadcn API",
+  "docs/api/shadcn-svelte": "@json-render/shadcn-svelte API",
   "docs/api/mcp": "@json-render/mcp API",
   "docs/api/redux": "@json-render/redux API",
   "docs/api/zustand": "@json-render/zustand API",

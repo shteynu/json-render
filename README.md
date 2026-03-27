@@ -127,6 +127,7 @@ function Dashboard({ spec }) {
 | `@json-render/svelte`       | Svelte 5 renderer with runes-based reactivity                          |
 | `@json-render/solid`        | SolidJS renderer with fine-grained reactive contexts                   |
 | `@json-render/shadcn`       | 36 pre-built shadcn/ui components (Radix UI + Tailwind CSS)            |
+| `@json-render/shadcn-svelte`| 36 pre-built shadcn-svelte components (Svelte 5 + Tailwind CSS)        |
 | `@json-render/react-three-fiber` | React Three Fiber renderer for 3D scenes (19 built-in components)  |
 | `@json-render/react-native` | React Native renderer with standard mobile components                  |
 | `@json-render/next`         | Next.js renderer — JSON becomes full apps with routes, layouts, SSR    |
@@ -483,6 +484,80 @@ const { registry } = defineRegistry(catalog, {
   camera={{ position: [5, 5, 5], fov: 50 }}
   style={{ width: "100%", height: "100vh" }}
 />;
+```
+
+### Next.js (Full Apps)
+
+```typescript
+import type { NextAppSpec } from "@json-render/next";
+import { createNextApp } from "@json-render/next/server";
+import { NextAppProvider } from "@json-render/next";
+
+const spec: NextAppSpec = {
+  metadata: { title: { default: "My App", template: "%s | My App" } },
+  layouts: {
+    main: {
+      root: "shell",
+      elements: {
+        shell: { type: "Container", props: {}, children: ["nav", "slot"] },
+        nav: { type: "NavBar", props: {}, children: [] },
+        slot: { type: "Slot", props: {}, children: [] },
+      },
+    },
+  },
+  routes: {
+    "/": {
+      layout: "main",
+      metadata: { title: "Home" },
+      page: {
+        root: "hero",
+        elements: {
+          hero: { type: "Card", props: { title: "Welcome" }, children: [] },
+        },
+      },
+    },
+  },
+};
+
+// Server: creates Page, generateMetadata, generateStaticParams
+const app = createNextApp({ spec });
+
+// Client: wrap your layout with NextAppProvider
+// <NextAppProvider registry={registry} handlers={handlers}>
+//   {children}
+// </NextAppProvider>
+```
+
+### shadcn-svelte (Svelte)
+
+```typescript
+import { defineCatalog } from "@json-render/core";
+import { schema } from "@json-render/svelte/schema";
+import { defineRegistry, Renderer } from "@json-render/svelte";
+import { shadcnComponentDefinitions } from "@json-render/shadcn-svelte/catalog";
+import { shadcnComponents } from "@json-render/shadcn-svelte";
+
+const catalog = defineCatalog(schema, {
+  components: {
+    Card: shadcnComponentDefinitions.Card,
+    Stack: shadcnComponentDefinitions.Stack,
+    Heading: shadcnComponentDefinitions.Heading,
+    Button: shadcnComponentDefinitions.Button,
+  },
+  actions: {},
+});
+
+const { registry } = defineRegistry(catalog, {
+  components: {
+    Card: shadcnComponents.Card,
+    Stack: shadcnComponents.Stack,
+    Heading: shadcnComponents.Heading,
+    Button: shadcnComponents.Button,
+  },
+});
+
+// In your Svelte component:
+// <Renderer spec={spec} registry={registry} />
 ```
 
 ### Ink (Terminal)
