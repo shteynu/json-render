@@ -1,13 +1,11 @@
 import type { NextAppSpec } from "@json-render/next";
-import { defaultSpec } from "@/lib/default-spec";
-
-let currentSpec: NextAppSpec = defaultSpec;
+import { getSpec, setSpec } from "@/lib/spec-store";
 
 export async function GET() {
-  return Response.json(currentSpec);
+  return Response.json(getSpec());
 }
 
 export async function PUT(req: Request) {
-  currentSpec = (await req.json()) as NextAppSpec;
+  setSpec((await req.json()) as NextAppSpec);
   return Response.json({ ok: true });
 }

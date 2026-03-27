@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 import { JsonEditor, type JsonValue } from "@visual-json/react";
 import type { NextAppSpec } from "@json-render/next";
 import { NextAppProvider, PageRenderer } from "@json-render/next";
@@ -9,12 +16,13 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { RouteTabs } from "@/components/route-tabs";
+import { AddressBar } from "@/components/route-tabs";
 import { registry } from "@/lib/registry";
 
 export function Editor() {
   const [spec, setSpec] = useState<NextAppSpec | null>(null);
   const [activeRoute, setActiveRoute] = useState("/");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -37,10 +45,14 @@ export function Editor() {
     }, 500);
   }, []);
 
-  const routes = useMemo(() => {
-    if (!spec) return [];
-    return Object.keys(spec.routes);
-  }, [spec]);
+  const handlePreviewClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    const anchor = (e.target as HTMLElement).closest("a");
+    if (!anchor) return;
+    const href = anchor.getAttribute("href");
+    if (!href || href.startsWith("http") || href.startsWith("mailto:")) return;
+    e.preventDefault();
+    setActiveRoute(href);
+  }, []);
 
   const currentRoute = useMemo(() => {
     if (!spec) return null;
@@ -84,16 +96,35 @@ export function Editor() {
       <ResizablePanelGroup orientation="horizontal" className="flex-1">
         <ResizablePanel defaultSize={45} minSize={25}>
           <div className="h-full flex flex-col">
-            <div className="flex items-center px-3 h-10 border-b border-border bg-muted/30">
+            <div className="flex items-center justify-between px-3 h-10 border-b border-border bg-muted/30">
               <span className="text-xs font-mono text-muted-foreground">
                 spec.json
               </span>
+              <button
+                onClick={() => setSidebarOpen((v) => !v)}
+                className="flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M9 3v18" />
+                </svg>
+              </button>
             </div>
             <div className="flex-1 overflow-auto">
               <JsonEditor
                 value={spec as unknown as JsonValue}
                 onChange={handleChange}
-                sidebarOpen={true}
+                sidebarOpen={sidebarOpen}
                 height="100%"
                 className="h-full"
                 style={
@@ -122,12 +153,11 @@ export function Editor() {
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={55} minSize={30}>
           <div className="h-full flex flex-col">
-            <RouteTabs
-              routes={routes}
-              activeRoute={activeRoute}
-              onRouteChange={setActiveRoute}
-            />
-            <div className="flex-1 overflow-auto bg-background">
+            <AddressBar route={activeRoute} onNavigate={setActiveRoute} />
+            <div
+              className="flex-1 overflow-auto bg-background"
+              onClick={handlePreviewClick}
+            >
               {currentRoute ? (
                 <NextAppProvider registry={registry}>
                   <PageRenderer
