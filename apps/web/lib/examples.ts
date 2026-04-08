@@ -53,7 +53,7 @@ export const examples: Example[] = [
     description: "AI chat app built with SvelteKit and the Svelte renderer.",
     tags: ["Svelte", "SvelteKit", "AI"],
     githubPath: "examples/svelte-chat",
-    demoUrl: "https://json-render-svelte-chat-demo.labs.vercel.dev",
+    demoUrl: "https://svelte-chat-demo.json-render.dev",
   },
   {
     slug: "vue",
