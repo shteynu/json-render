@@ -156,15 +156,6 @@ export function _resetWarnedComputedFns(): void {
   warnedComputedFns.clear();
 }
 
-// Same deduplication pattern for $template paths that don't start with "/".
-const WARNED_TEMPLATE_MAX = 100;
-const warnedTemplatePaths = new Set<string>();
-
-/** @internal Test-only: clear the deduplication set for $template warnings. */
-export function _resetWarnedTemplatePaths(): void {
-  warnedTemplatePaths.clear();
-}
-
 // =============================================================================
 // Prop Expression Resolution
 // =============================================================================
@@ -269,24 +260,25 @@ export function resolvePropValue(
     return fn(resolvedArgs);
   }
 
-  // $template: interpolate ${/path} references with state values
+  // $template: interpolate ${/path} and ${field} references.
+  // Absolute paths (starting with "/") resolve against the state model.
+  // Bare names resolve against the current repeat item first, then fall
+  // back to the state model at "/<name>".
   if (isTemplateExpression(value)) {
     return value.$template.replace(
       /\$\{([^}]+)\}/g,
       (_match, rawPath: string) => {
-        let path = rawPath;
-        if (!path.startsWith("/")) {
-          if (!warnedTemplatePaths.has(path)) {
-            if (warnedTemplatePaths.size < WARNED_TEMPLATE_MAX) {
-              warnedTemplatePaths.add(path);
-            }
-            console.warn(
-              `$template path "${path}" should be a JSON Pointer starting with "/". Automatically resolving as "/${path}".`,
-            );
-          }
-          path = "/" + path;
+        if (rawPath.startsWith("/")) {
+          const resolved = getByPath(ctx.stateModel, rawPath);
+          return resolved != null ? String(resolved) : "";
         }
-        const resolved = getByPath(ctx.stateModel, path);
+        // Bare name: try repeat item first
+        if (ctx.repeatItem !== undefined) {
+          const fromItem = getByPath(ctx.repeatItem, rawPath);
+          if (fromItem != null) return String(fromItem);
+        }
+        // Fall back to state model
+        const resolved = getByPath(ctx.stateModel, "/" + rawPath);
         return resolved != null ? String(resolved) : "";
       },
     );
