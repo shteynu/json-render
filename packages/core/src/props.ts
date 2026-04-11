@@ -24,8 +24,10 @@ import { evaluateVisibility, type VisibilityContext } from "./visibility";
  * - `{ $cond, $then, $else }` conditionally picks a value
  * - `{ $computed: string, args?: Record<string, PropExpression> }` calls a
  *    registered function with resolved args and returns the result
- * - `{ $template: string }` interpolates `${/path}` references in the
- *    string with values from the state model
+ * - `{ $template: string }` interpolates `${/path}` and `${field}`
+ *    references. Absolute paths (`${/path}`) resolve against the state
+ *    model. Bare names (`${field}`) resolve against the current repeat
+ *    item first, then fall back to the state model at `/<field>`.
  * - Any other value is a literal (passthrough)
  */
 export type PropExpression<T = unknown> =
