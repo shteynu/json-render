@@ -714,7 +714,23 @@ React to state changes by triggering actions:
 
 ---
 
-## Demo
+## Development
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 18+
+- [pnpm](https://pnpm.io/) 10+
+- [portless](https://github.com/vercel-labs/portless) (global install required for `pnpm dev`)
+
+Install portless globally before running the monorepo dev server:
+
+```bash
+npm i -g portless
+```
+
+portless assigns random ports and exposes each app/example via `.localhost` URLs so nothing collides. The `predev` script will remind you if it's missing.
+
+### Running everything
 
 ```bash
 git clone https://github.com/vercel-labs/json-render
@@ -723,17 +739,39 @@ pnpm install
 pnpm dev
 ```
 
+This starts all apps and examples in parallel:
+
 - http://json-render.localhost:1355 - Docs & Playground
 - http://dashboard-demo.json-render.localhost:1355 - Example Dashboard
 - http://react-email-demo.json-render.localhost:1355 - React Email Example
 - http://remotion-demo.json-render.localhost:1355 - Remotion Video Example
-- Chat Example: run `pnpm dev` in `examples/chat`
-- Svelte Example: run `pnpm dev` in `examples/svelte` or `examples/svelte-chat`
-- Vue Example: run `pnpm dev` in `examples/vue`
-- Vite Renderers (React + Vue + Svelte + Solid): run `pnpm dev` in `examples/vite-renderers`
-- React Native example: run `npx expo start` in `examples/react-native`
-- Gaussian Splatting (R3F): run `pnpm dev` in `examples/react-three-fiber-gsplat`
-- Gaussian Splatting (experimental standalone gsplat.js demo): run `pnpm dev` in `examples/gsplat`
+
+### Running a single example
+
+If you don't want to install portless, you can run any example directly by bypassing the portless wrapper:
+
+```bash
+cd examples/chat
+pnpm next dev --turbopack
+```
+
+For Vite-based examples (Svelte, Vue, Solid, vite-renderers):
+
+```bash
+cd examples/vue
+pnpm vite
+```
+
+### All examples
+
+- Chat: `examples/chat`
+- Svelte: `examples/svelte` or `examples/svelte-chat`
+- Vue: `examples/vue`
+- Solid: `examples/solid`
+- Vite Renderers (React + Vue + Svelte + Solid): `examples/vite-renderers`
+- React Native: run `npx expo start` in `examples/react-native`
+- Gaussian Splatting (R3F): `examples/react-three-fiber-gsplat`
+- Gaussian Splatting (gsplat.js): `examples/gsplat`
 
 ## How It Works
 
