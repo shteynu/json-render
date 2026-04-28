@@ -6,15 +6,18 @@ on:
       - main
   workflow_dispatch:
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   check-release:
     name: Check for new version
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions:
-      contents: read
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
       needs_github_release: ${{ steps.check.outputs.needs_github_release }}
@@ -53,41 +56,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build:
-    name: Build
+  publish:
+    name: Publish to npm
     needs: check-release
     if: needs.check-release.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: Release
     permissions:
       contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm run build
-
-  publish:
-    name: Publish to npm
-    needs: [check-release, build]
-    if: needs.check-release.outputs.should_release == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -109,9 +87,7 @@ jobs:
         run: pnpm run build
 
       - name: Publish all public packages
-        run: pnpm -r publish --no-git-checks --filter '@json-render/*'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_VERCEL_TOKEN_ELEVATED }}
+        run: pnpm -r publish --provenance --no-git-checks --access public --filter '@json-render/*'
 
   github-release:
     name: Create GitHub Release
@@ -151,6 +127,7 @@ jobs:
             echo "Creating release $TAG..."
             gh release create "$TAG" \
               --title "$TAG" \
+              --target ${{ github.sha }} \
               --notes-file /tmp/release-notes.md
           fi
         env:

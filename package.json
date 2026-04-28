@@ -25,7 +25,7 @@
     "prepare": "husky",
     "version:sync": "node scripts/sync-version.js",
     "version:check": "node scripts/check-version-sync.js",
-    "ci:publish": "pnpm run build && pnpm -r publish --no-git-checks --filter '@json-render/*'",
+    "ci:publish": "pnpm run build && pnpm -r publish --provenance --no-git-checks --access public --filter '@json-render/*'",
     "generate:og": "npx tsx scripts/generate-og-images.mts"
   },
   "devDependencies": {
