@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { EditMode } from "./edit-modes";
 import { buildEditInstructions } from "./edit-modes";
+import type { DirectiveDefinition } from "./directives";
 
 /**
  * Schema builder primitives
@@ -146,6 +147,12 @@ export interface PromptOptions {
   mode?: "standalone" | "inline" | "generate" | "chat";
   /** Edit modes to document in the system prompt. Default: `["patch"]`. */
   editModes?: EditMode[];
+  /**
+   * Custom directives to include in the system prompt.
+   * Each directive's `prompt` text is appended to the dynamic props section.
+   * Typically you pass the same directives array used at runtime.
+   */
+  directives?: DirectiveDefinition[];
 }
 
 /**
@@ -966,6 +973,20 @@ Note: state patches appear right after the elements that use them, so the UI fil
       lines.push(`   - ${name}`);
     }
     lines.push("");
+  }
+
+  // Custom directives section — emit when directives are provided
+  const directives = options.directives;
+  if (directives && directives.length > 0) {
+    const directivesWithPrompts = directives.filter((d) => d.prompt);
+    if (directivesWithPrompts.length > 0) {
+      lines.push("CUSTOM DYNAMIC VALUES:");
+      lines.push("");
+      for (const d of directivesWithPrompts) {
+        lines.push(`- ${d.name}: ${d.prompt}`);
+      }
+      lines.push("");
+    }
   }
 
   // Validation section — only emit when at least one component has a `checks` prop
