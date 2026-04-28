@@ -8,9 +8,8 @@ export const joinDirective = defineDirective({
     separator: z.string().optional(),
   }),
   resolve(raw, ctx) {
-    const directive = raw as { $join: unknown; separator?: string };
-    const resolved = resolvePropValue(directive.$join, ctx);
-    const separator = directive.separator ?? ", ";
+    const resolved = resolvePropValue(raw.$join, ctx);
+    const separator = raw.separator ?? ", ";
 
     if (Array.isArray(resolved)) {
       return resolved

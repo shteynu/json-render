@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { defineDirective, resolvePropValue } from "@json-render/core";
 
+function toNum(v: unknown): number {
+  if (v == null) return 0;
+  const n = Number(v);
+  return Number.isNaN(n) ? 0 : n;
+}
+
 export const mathDirective = defineDirective({
   name: "$math",
   schema: z.object({
@@ -21,15 +27,10 @@ export const mathDirective = defineDirective({
     b: z.unknown().optional(),
   }),
   resolve(raw, ctx) {
-    const directive = raw as {
-      $math: string;
-      a?: unknown;
-      b?: unknown;
-    };
-    const a = resolvePropValue(directive.a, ctx) as number;
-    const b = resolvePropValue(directive.b, ctx) as number;
+    const a = toNum(resolvePropValue(raw.a, ctx));
+    const b = toNum(resolvePropValue(raw.b, ctx));
 
-    switch (directive.$math) {
+    switch (raw.$math) {
       case "add":
         return a + b;
       case "subtract":

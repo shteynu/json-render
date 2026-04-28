@@ -7,8 +7,7 @@ export const concatDirective = defineDirective({
     $concat: z.array(z.unknown()),
   }),
   resolve(raw, ctx) {
-    const parts = (raw as { $concat: unknown[] }).$concat;
-    return parts
+    return raw.$concat
       .map((part) => {
         const resolved = resolvePropValue(part, ctx);
         return resolved != null ? String(resolved) : "";

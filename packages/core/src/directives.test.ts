@@ -81,6 +81,18 @@ describe("findDirective", () => {
   it("ignores $ keys not in registry", () => {
     expect(findDirective({ $unknown: 1 }, registry)).toBeUndefined();
   });
+
+  it("throws when multiple directive keys match", () => {
+    const d2 = defineDirective({
+      name: "$lower",
+      schema: z.object({ $lower: z.string() }),
+      resolve: (v) => String((v as { $lower: string }).$lower).toLowerCase(),
+    });
+    const multiRegistry = createDirectiveRegistry([d, d2]);
+    expect(() =>
+      findDirective({ $upper: "hello", $lower: "WORLD" }, multiRegistry),
+    ).toThrow("Ambiguous directive");
+  });
 });
 
 describe("resolvePropValue with custom directives", () => {

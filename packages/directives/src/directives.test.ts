@@ -72,6 +72,21 @@ describe("$format", () => {
     expect(typeof result).toBe("string");
     expect(result).toContain("2024");
   });
+
+  it("formats a relative date with injectable now", () => {
+    const ctx = makeCtx();
+    const baseDate = new Date("2024-06-15T12:00:00Z").getTime();
+    const result = resolvePropValue(
+      {
+        $format: "date",
+        value: "2024-06-15T12:00:00Z",
+        style: "relative",
+        now: baseDate + 3 * 60 * 60 * 1000,
+      },
+      ctx,
+    );
+    expect(result).toBe("3h ago");
+  });
 });
 
 // ============================================================================
@@ -142,6 +157,16 @@ describe("$math", () => {
   it("computes abs", () => {
     const ctx = makeCtx();
     expect(resolvePropValue({ $math: "abs", a: -5 }, ctx)).toBe(5);
+  });
+
+  it("defaults missing operand b to 0", () => {
+    const ctx = makeCtx();
+    expect(resolvePropValue({ $math: "add", a: 5 }, ctx)).toBe(5);
+  });
+
+  it("defaults missing operand a to 0", () => {
+    const ctx = makeCtx();
+    expect(resolvePropValue({ $math: "add", b: 3 }, ctx)).toBe(3);
   });
 });
 
@@ -286,6 +311,13 @@ describe("$pluralize", () => {
         ctx,
       ),
     ).toBe("3 files");
+  });
+
+  it("coerces string count to number", () => {
+    const ctx = makeCtx();
+    expect(
+      resolvePropValue({ $pluralize: "3", one: "item", other: "items" }, ctx),
+    ).toBe("3 items");
   });
 });
 

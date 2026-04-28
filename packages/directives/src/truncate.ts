@@ -9,15 +9,10 @@ export const truncateDirective = defineDirective({
     suffix: z.string().optional(),
   }),
   resolve(raw, ctx) {
-    const directive = raw as {
-      $truncate: unknown;
-      length?: number;
-      suffix?: string;
-    };
-    const resolved = resolvePropValue(directive.$truncate, ctx);
+    const resolved = resolvePropValue(raw.$truncate, ctx);
     const text = resolved != null ? String(resolved) : "";
-    const maxLength = directive.length ?? 100;
-    const suffix = directive.suffix ?? "...";
+    const maxLength = raw.length ?? 100;
+    const suffix = raw.suffix ?? "...";
 
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + suffix;

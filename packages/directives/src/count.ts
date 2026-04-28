@@ -7,7 +7,7 @@ export const countDirective = defineDirective({
     $count: z.unknown(),
   }),
   resolve(raw, ctx) {
-    const resolved = resolvePropValue((raw as { $count: unknown }).$count, ctx);
+    const resolved = resolvePropValue(raw.$count, ctx);
     if (Array.isArray(resolved)) return resolved.length;
     if (typeof resolved === "string") return resolved.length;
     return 0;

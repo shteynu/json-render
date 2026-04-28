@@ -33,8 +33,7 @@ export function createI18nDirective(config: I18nConfig): DirectiveDefinition {
       params: z.record(z.string(), z.unknown()).optional(),
     }),
     resolve(raw, ctx) {
-      const directive = raw as { $t: string; params?: Record<string, unknown> };
-      const key = directive.$t;
+      const key = raw.$t;
 
       const localeMessages = config.messages[config.locale];
       const fallbackMessages = config.fallbackLocale
@@ -42,8 +41,8 @@ export function createI18nDirective(config: I18nConfig): DirectiveDefinition {
         : undefined;
       let template = localeMessages?.[key] ?? fallbackMessages?.[key] ?? key;
 
-      if (directive.params) {
-        for (const [paramKey, paramValue] of Object.entries(directive.params)) {
+      if (raw.params) {
+        for (const [paramKey, paramValue] of Object.entries(raw.params)) {
           const resolved = resolvePropValue(paramValue, ctx);
           template = template.replace(
             new RegExp(`\\{\\{${paramKey}\\}\\}`, "g"),

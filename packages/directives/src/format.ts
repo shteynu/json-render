@@ -11,27 +11,19 @@ export const formatDirective = defineDirective({
     notation: z.string().optional(),
     style: z.string().optional(),
     options: z.record(z.string(), z.unknown()).optional(),
+    now: z.number().optional(),
   }),
   resolve(raw, ctx) {
-    const directive = raw as {
-      $format: string;
-      value: unknown;
-      locale?: string;
-      currency?: string;
-      notation?: string;
-      style?: string;
-      options?: Record<string, unknown>;
-    };
-    const value = resolvePropValue(directive.value, ctx);
-    const locale = directive.locale ?? undefined;
-    const extra = directive.options ?? {};
+    const value = resolvePropValue(raw.value, ctx);
+    const locale = raw.locale ?? undefined;
+    const extra = raw.options ?? {};
 
-    switch (directive.$format) {
+    switch (raw.$format) {
       case "date": {
         const date =
           value instanceof Date ? value : new Date(value as string | number);
-        if (directive.style === "relative") {
-          const now = Date.now();
+        if (raw.style === "relative") {
+          const now = raw.now ?? Date.now();
           const diff = now - date.getTime();
           const seconds = Math.floor(diff / 1000);
           const minutes = Math.floor(seconds / 60);
@@ -50,15 +42,14 @@ export const formatDirective = defineDirective({
       case "currency":
         return new Intl.NumberFormat(locale, {
           style: "currency",
-          currency: directive.currency ?? "USD",
+          currency: raw.currency ?? "USD",
           ...(extra as Intl.NumberFormatOptions),
         }).format(value as number);
       case "number":
         return new Intl.NumberFormat(locale, {
-          ...(directive.notation
+          ...(raw.notation
             ? {
-                notation:
-                  directive.notation as Intl.NumberFormatOptions["notation"],
+                notation: raw.notation as Intl.NumberFormatOptions["notation"],
               }
             : {}),
           ...(extra as Intl.NumberFormatOptions),

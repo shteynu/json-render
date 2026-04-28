@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import type { Spec, DirectiveDefinition } from "@json-render/core";
+import { z } from "zod";
+import type { Spec } from "@json-render/core";
 import { defineDirective, resolvePropValue } from "@json-render/core";
 import {
   JSONUIProvider,
@@ -16,18 +17,11 @@ function Text({ element }: ComponentRenderProps<{ text: unknown }>) {
 
 const registry = { Text };
 
-// Schema is only needed for validation — for resolution tests we can
-// pass a minimal placeholder since resolve() doesn't use it.
-const noopSchema = {} as DirectiveDefinition["schema"];
-
 const doubleDirective = defineDirective({
   name: "$double",
-  schema: noopSchema,
+  schema: z.object({ $double: z.unknown() }),
   resolve(value, ctx) {
-    const resolved = resolvePropValue(
-      (value as { $double: unknown }).$double,
-      ctx,
-    );
+    const resolved = resolvePropValue(value.$double, ctx);
     return (resolved as number) * 2;
   },
   prompt: "Double a numeric value.",
@@ -35,12 +29,9 @@ const doubleDirective = defineDirective({
 
 const upperDirective = defineDirective({
   name: "$upper",
-  schema: noopSchema,
+  schema: z.object({ $upper: z.unknown() }),
   resolve(value, ctx) {
-    const resolved = resolvePropValue(
-      (value as { $upper: unknown }).$upper,
-      ctx,
-    );
+    const resolved = resolvePropValue(value.$upper, ctx);
     return String(resolved).toUpperCase();
   },
 });

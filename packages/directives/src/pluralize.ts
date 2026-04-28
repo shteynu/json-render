@@ -10,18 +10,13 @@ export const pluralizeDirective = defineDirective({
     other: z.string(),
   }),
   resolve(raw, ctx) {
-    const directive = raw as {
-      $pluralize: unknown;
-      zero?: string;
-      one: string;
-      other: string;
-    };
-    const resolved = resolvePropValue(directive.$pluralize, ctx);
-    const count = typeof resolved === "number" ? resolved : 0;
+    const resolved = resolvePropValue(raw.$pluralize, ctx);
+    const n = Number(resolved);
+    const count = Number.isNaN(n) ? 0 : n;
 
-    if (count === 0 && directive.zero != null) return directive.zero;
-    if (count === 1) return `${count} ${directive.one}`;
-    return `${count} ${directive.other}`;
+    if (count === 0 && raw.zero != null) return raw.zero;
+    if (count === 1) return `${count} ${raw.one}`;
+    return `${count} ${raw.other}`;
   },
   prompt:
     'Use { "$pluralize": <count>, "one": "item", "other": "items", "zero": "no items" } to select singular/plural text. Output: "3 items", "1 item", or "no items".',

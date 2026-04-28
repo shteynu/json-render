@@ -32,13 +32,15 @@
 
   let { directives, children }: Props = $props();
 
-  const ctx: DirectivesContext = {
-    get registry() {
-      return directives ? createDirectiveRegistry(directives) : undefined;
-    },
-  };
+  let registry = $derived(
+    directives ? createDirectiveRegistry(directives) : undefined,
+  );
 
-  setContext(DIRECTIVES_KEY, ctx);
+  setContext(DIRECTIVES_KEY, {
+    get registry() {
+      return registry;
+    },
+  } satisfies DirectivesContext);
 </script>
 
 {@render children?.()}

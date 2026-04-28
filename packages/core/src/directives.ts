@@ -87,10 +87,16 @@ export function findDirective(
   directives?: DirectiveRegistry,
 ): DirectiveDefinition | undefined {
   if (!directives || directives.size === 0) return undefined;
+  let match: DirectiveDefinition | undefined;
   for (const key of Object.keys(value)) {
     if (key.startsWith("$") && directives.has(key)) {
-      return directives.get(key);
+      if (match) {
+        throw new Error(
+          `Ambiguous directive: object has multiple directive keys ("${match.name}" and "${key}")`,
+        );
+      }
+      match = directives.get(key);
     }
   }
-  return undefined;
+  return match;
 }
