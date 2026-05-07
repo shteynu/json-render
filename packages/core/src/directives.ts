@@ -45,11 +45,24 @@ export interface DirectiveDefinition<TSchema extends z.ZodType = z.ZodType> {
  */
 export type DirectiveRegistry = Map<string, DirectiveDefinition>;
 
+/** Keys handled by built-in prop resolution — directives must not shadow these. */
+const BUILT_IN_KEYS = new Set([
+  "$state",
+  "$item",
+  "$index",
+  "$bindState",
+  "$bindItem",
+  "$cond",
+  "$computed",
+  "$template",
+]);
+
 /**
  * Define a custom directive.
  *
  * This is an identity function that provides type checking and serves as
- * a documentation convention.
+ * a documentation convention. Throws if the name collides with a built-in
+ * prop expression key.
  */
 export function defineDirective<TSchema extends z.ZodType>(
   definition: DirectiveDefinition<TSchema>,
@@ -57,6 +70,11 @@ export function defineDirective<TSchema extends z.ZodType>(
   if (!definition.name.startsWith("$")) {
     throw new Error(
       `Directive name must start with "$": got "${definition.name}"`,
+    );
+  }
+  if (BUILT_IN_KEYS.has(definition.name)) {
+    throw new Error(
+      `Directive name "${definition.name}" conflicts with a built-in prop expression key`,
     );
   }
   return definition;
@@ -78,9 +96,13 @@ export function createDirectiveRegistry(
 /**
  * Look up a custom directive for a plain-object value.
  *
- * Scans the object's keys for a `$`-prefixed key that matches a registered
- * directive. Returns `undefined` when no match is found or when no registry
- * is provided.
+ * Iterates the registry and checks whether the object contains a matching key.
+ * Returns `undefined` when no match is found or when no registry is provided.
+ *
+ * This is only called **after** all built-in expressions (`$state`, `$cond`,
+ * etc.) have been checked in `resolvePropValue`, so built-ins always take
+ * precedence. {@link defineDirective} enforces this at registration time by
+ * rejecting names that collide with built-in keys.
  */
 export function findDirective(
   value: Record<string, unknown>,

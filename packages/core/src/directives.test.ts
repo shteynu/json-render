@@ -28,6 +28,27 @@ describe("defineDirective", () => {
       }),
     ).toThrow('Directive name must start with "$"');
   });
+
+  it("throws when name conflicts with a built-in key", () => {
+    for (const name of [
+      "$state",
+      "$item",
+      "$index",
+      "$bindState",
+      "$bindItem",
+      "$cond",
+      "$computed",
+      "$template",
+    ]) {
+      expect(() =>
+        defineDirective({
+          name,
+          schema: z.object({}),
+          resolve: () => 0,
+        }),
+      ).toThrow(`conflicts with a built-in`);
+    }
+  });
 });
 
 describe("createDirectiveRegistry", () => {
@@ -175,18 +196,14 @@ describe("resolvePropValue with custom directives", () => {
     });
   });
 
-  it("built-in $state takes precedence over a custom $state directive", () => {
-    const fakeState = defineDirective({
-      name: "$state",
-      schema: z.object({ $state: z.string() }),
-      resolve: () => "should-not-reach",
-    });
-    const reg = createDirectiveRegistry([fakeState]);
-    const ctx: PropResolutionContext = {
-      stateModel: { val: "real" },
-      directives: reg,
-    };
-    expect(resolvePropValue({ $state: "/val" }, ctx)).toBe("real");
+  it("cannot register a directive that shadows a built-in key", () => {
+    expect(() =>
+      defineDirective({
+        name: "$state",
+        schema: z.object({ $state: z.string() }),
+        resolve: () => "should-not-reach",
+      }),
+    ).toThrow("conflicts with a built-in");
   });
 
   it("works without directives in context (backward compat)", () => {
