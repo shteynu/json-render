@@ -4,7 +4,13 @@ import { defineDirective, resolvePropValue } from "@json-render/core";
 function toNum(v: unknown): number {
   if (v == null) return 0;
   const n = Number(v);
-  return Number.isNaN(n) ? 0 : n;
+  if (Number.isNaN(n)) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`$math: non-numeric value coerced to 0:`, v);
+    }
+    return 0;
+  }
+  return n;
 }
 
 export const mathDirective = defineDirective({

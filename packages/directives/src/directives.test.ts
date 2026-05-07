@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   resolvePropValue,
   createDirectiveRegistry,
@@ -87,6 +87,36 @@ describe("$format", () => {
     );
     expect(result).toBe("3h ago");
   });
+
+  it("formats a future relative date", () => {
+    const ctx = makeCtx();
+    const baseDate = new Date("2024-06-15T12:00:00Z").getTime();
+    const result = resolvePropValue(
+      {
+        $format: "date",
+        value: "2024-06-15T12:00:00Z",
+        style: "relative",
+        now: baseDate - 2 * 60 * 60 * 1000,
+      },
+      ctx,
+    );
+    expect(result).toBe("2h from now");
+  });
+
+  it("returns 'just now' when date equals now", () => {
+    const ctx = makeCtx();
+    const ts = new Date("2024-06-15T12:00:00Z").getTime();
+    const result = resolvePropValue(
+      {
+        $format: "date",
+        value: "2024-06-15T12:00:00Z",
+        style: "relative",
+        now: ts,
+      },
+      ctx,
+    );
+    expect(result).toBe("just now");
+  });
 });
 
 // ============================================================================
@@ -167,6 +197,18 @@ describe("$math", () => {
   it("defaults missing operand a to 0", () => {
     const ctx = makeCtx();
     expect(resolvePropValue({ $math: "add", b: 3 }, ctx)).toBe(3);
+  });
+
+  it("warns when a non-numeric value is coerced to 0", () => {
+    const ctx = makeCtx();
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const result = resolvePropValue({ $math: "add", a: "foo", b: 3 }, ctx);
+    expect(result).toBe(3);
+    expect(spy).toHaveBeenCalledWith(
+      "$math: non-numeric value coerced to 0:",
+      "foo",
+    );
+    spy.mockRestore();
   });
 });
 
