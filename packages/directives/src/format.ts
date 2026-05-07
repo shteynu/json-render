@@ -3,6 +3,8 @@ import { defineDirective, resolvePropValue } from "@json-render/core";
 
 export const formatDirective = defineDirective({
   name: "$format",
+  description:
+    'Locale-aware value formatting (date, currency, number, percent). Supports style: "relative" for relative dates.',
   schema: z.object({
     $format: z.enum(["date", "currency", "number", "percent"]),
     value: z.unknown(),
@@ -66,6 +68,4 @@ export const formatDirective = defineDirective({
         return value;
     }
   },
-  prompt:
-    'Use { "$format": "date|currency|number|percent", "value": <dynamic-value>, "locale": "en-US", "currency": "USD" } to format values for display. The "value" field accepts any dynamic expression ($state, other directives, etc.).',
 });

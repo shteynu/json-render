@@ -13,6 +13,8 @@ function toNum(v: unknown): number {
 
 export const mathDirective = defineDirective({
   name: "$math",
+  description:
+    'Arithmetic operations. Unary ops (round, floor, ceil, abs) only use "a". Division by zero returns 0.',
   schema: z.object({
     $math: z.enum([
       "add",
@@ -61,6 +63,4 @@ export const mathDirective = defineDirective({
         return a;
     }
   },
-  prompt:
-    'Use { "$math": "add|subtract|multiply|divide|mod|min|max|round|floor|ceil|abs", "a": <value>, "b": <value> } for arithmetic. Values accept dynamic expressions. Unary ops (round, floor, ceil, abs) only use "a".',
 });

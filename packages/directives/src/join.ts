@@ -3,6 +3,7 @@ import { defineDirective, resolvePropValue } from "@json-render/core";
 
 export const joinDirective = defineDirective({
   name: "$join",
+  description: "Join array elements with a separator.",
   schema: z.object({
     $join: z.unknown(),
     separator: z.string().optional(),
@@ -18,6 +19,4 @@ export const joinDirective = defineDirective({
     }
     return resolved != null ? String(resolved) : "";
   },
-  prompt:
-    'Use { "$join": <array>, "separator": ", " } to join array elements with a separator. Default separator is ", ".',
 });

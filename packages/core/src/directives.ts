@@ -9,6 +9,7 @@ import type { PropResolutionContext } from "./props";
  * ```ts
  * const formatDirective = defineDirective({
  *   name: '$format',
+ *   description: 'Locale-aware value formatting (date, currency, number, percent).',
  *   schema: z.object({
  *     $format: z.enum(['date', 'currency', 'number']),
  *     value: z.unknown(),
@@ -17,13 +18,17 @@ import type { PropResolutionContext } from "./props";
  *     const resolved = resolvePropValue(value.value, ctx);
  *     return new Intl.NumberFormat().format(resolved);
  *   },
- *   prompt: 'Use { "$format": "currency", "value": ... } to format values.',
  * });
  * ```
  */
 export interface DirectiveDefinition<TSchema extends z.ZodType = z.ZodType> {
   /** The `$`-prefixed key that triggers this directive (e.g. `"$format"`). */
   name: string;
+  /**
+   * Short description of the directive for the AI system prompt.
+   * The schema fields are auto-generated; this adds behavioral context.
+   */
+  description?: string;
   /** Zod schema for validating the directive object. */
   schema: TSchema;
   /**
@@ -32,11 +37,6 @@ export interface DirectiveDefinition<TSchema extends z.ZodType = z.ZodType> {
    * to support composition with other dynamic expressions.
    */
   resolve: (value: z.infer<TSchema>, ctx: PropResolutionContext) => unknown;
-  /**
-   * Prompt text appended to the system prompt when this directive is
-   * registered in a catalog. Describes usage for the AI model.
-   */
-  prompt?: string;
 }
 
 /**

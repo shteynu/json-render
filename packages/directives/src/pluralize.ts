@@ -3,6 +3,8 @@ import { defineDirective, resolvePropValue } from "@json-render/core";
 
 export const pluralizeDirective = defineDirective({
   name: "$pluralize",
+  description:
+    'Select singular/plural/zero form based on count. Output: "3 items", "1 item", or "no items".',
   schema: z.object({
     $pluralize: z.unknown(),
     zero: z.string().optional(),
@@ -18,6 +20,4 @@ export const pluralizeDirective = defineDirective({
     if (count === 1) return `${count} ${raw.one}`;
     return `${count} ${raw.other}`;
   },
-  prompt:
-    'Use { "$pluralize": <count>, "one": "item", "other": "items", "zero": "no items" } to select singular/plural text. Output: "3 items", "1 item", or "no items".',
 });

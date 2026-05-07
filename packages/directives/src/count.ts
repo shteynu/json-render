@@ -3,6 +3,7 @@ import { defineDirective, resolvePropValue } from "@json-render/core";
 
 export const countDirective = defineDirective({
   name: "$count",
+  description: "Get the length of an array or string.",
   schema: z.object({
     $count: z.unknown(),
   }),
@@ -12,6 +13,4 @@ export const countDirective = defineDirective({
     if (typeof resolved === "string") return resolved.length;
     return 0;
   },
-  prompt:
-    'Use { "$count": <array-or-string> } to get the length of an array or string.',
 });

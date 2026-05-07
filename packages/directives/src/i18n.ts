@@ -28,6 +28,7 @@ export interface I18nConfig {
 export function createI18nDirective(config: I18nConfig): DirectiveDefinition {
   return defineDirective({
     name: "$t",
+    description: "Translated text with {{param}} interpolation.",
     schema: z.object({
       $t: z.string(),
       params: z.record(z.string(), z.unknown()).optional(),
@@ -53,7 +54,5 @@ export function createI18nDirective(config: I18nConfig): DirectiveDefinition {
 
       return template;
     },
-    prompt:
-      'Use { "$t": "translation.key" } for translated text. Use { "$t": "key", "params": { "name": <value> } } for interpolation ({{name}} in the translation string).',
   });
 }

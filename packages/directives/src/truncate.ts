@@ -3,6 +3,7 @@ import { defineDirective, resolvePropValue } from "@json-render/core";
 
 export const truncateDirective = defineDirective({
   name: "$truncate",
+  description: "Truncate text to a max length with a suffix.",
   schema: z.object({
     $truncate: z.unknown(),
     length: z.number().optional(),
@@ -17,6 +18,4 @@ export const truncateDirective = defineDirective({
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + suffix;
   },
-  prompt:
-    'Use { "$truncate": <value>, "length": 140, "suffix": "..." } to truncate text. Default length is 100, default suffix is "...".',
 });

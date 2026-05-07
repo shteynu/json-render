@@ -19,12 +19,12 @@ const registry = { Text };
 
 const doubleDirective = defineDirective({
   name: "$double",
+  description: "Double a numeric value.",
   schema: z.object({ $double: z.unknown() }),
   resolve(value, ctx) {
     const resolved = resolvePropValue(value.$double, ctx);
     return (resolved as number) * 2;
   },
-  prompt: "Double a numeric value.",
 });
 
 const upperDirective = defineDirective({

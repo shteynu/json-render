@@ -149,8 +149,8 @@ export interface PromptOptions {
   editModes?: EditMode[];
   /**
    * Custom directives to include in the system prompt.
-   * Each directive's `prompt` text is appended to the dynamic props section.
-   * Typically you pass the same directives array used at runtime.
+   * Each directive's schema is auto-described; the optional `description`
+   * field adds behavioral context. Pass the same array used at runtime.
    */
   directives?: DirectiveDefinition[];
 }
@@ -975,18 +975,16 @@ Note: state patches appear right after the elements that use them, so the UI fil
     lines.push("");
   }
 
-  // Custom directives section — emit when directives are provided
+  // Custom directives section — auto-describe schema + optional description
   const directives = options.directives;
   if (directives && directives.length > 0) {
-    const directivesWithPrompts = directives.filter((d) => d.prompt);
-    if (directivesWithPrompts.length > 0) {
-      lines.push("CUSTOM DYNAMIC VALUES:");
-      lines.push("");
-      for (const d of directivesWithPrompts) {
-        lines.push(`- ${d.name}: ${d.prompt}`);
-      }
-      lines.push("");
+    lines.push("CUSTOM DYNAMIC VALUES:");
+    lines.push("");
+    for (const d of directives) {
+      const desc = d.description ? ` (${d.description})` : "";
+      lines.push(`- ${d.name}${desc}: ${formatZodType(d.schema)}`);
     }
+    lines.push("");
   }
 
   // Validation section — only emit when at least one component has a `checks` prop

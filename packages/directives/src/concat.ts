@@ -3,6 +3,7 @@ import { defineDirective, resolvePropValue } from "@json-render/core";
 
 export const concatDirective = defineDirective({
   name: "$concat",
+  description: "Concatenate multiple dynamic values into a string.",
   schema: z.object({
     $concat: z.array(z.unknown()),
   }),
@@ -14,6 +15,4 @@ export const concatDirective = defineDirective({
       })
       .join("");
   },
-  prompt:
-    'Use { "$concat": [<value>, " ", <value>] } to concatenate multiple dynamic values into a string. Each element is resolved, then joined.',
 });
