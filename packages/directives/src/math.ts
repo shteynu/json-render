@@ -5,9 +5,7 @@ function toNum(v: unknown): number {
   if (v == null) return 0;
   const n = Number(v);
   if (Number.isNaN(n)) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(`$math: non-numeric value coerced to 0:`, v);
-    }
+    console.warn(`$math: non-numeric value coerced to 0:`, v);
     return 0;
   }
   return n;
