@@ -301,8 +301,7 @@ export function resolvePropValue(
       ctx.directives,
     );
     if (directive) {
-      const parsed = directive.schema.parse(value);
-      return directive.resolve(parsed, ctx);
+      return directive.resolve(value, ctx);
     }
 
     // Plain objects (not expressions): resolve each value recursively
