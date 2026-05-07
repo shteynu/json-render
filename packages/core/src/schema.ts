@@ -985,6 +985,10 @@ Note: state patches appear right after the elements that use them, so the UI fil
       lines.push(`- ${d.name}${desc}: ${formatZodType(d.schema)}`);
     }
     lines.push("");
+    lines.push(
+      "Directives compose: any value field can contain another directive or a $state expression, resolved inside-out.",
+    );
+    lines.push("");
   }
 
   // Validation section — only emit when at least one component has a `checks` prop

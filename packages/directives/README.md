@@ -11,30 +11,10 @@ npm install @json-render/directives
 ## Quick Start
 
 ```typescript
-import {
-  formatDirective,
-  mathDirective,
-  concatDirective,
-  countDirective,
-  truncateDirective,
-  pluralizeDirective,
-  joinDirective,
-  createI18nDirective,
-} from '@json-render/directives';
-
-// Pick the directives you need
-const directives = [
-  formatDirective,
-  mathDirective,
-  concatDirective,
-  countDirective,
-  truncateDirective,
-  pluralizeDirective,
-  joinDirective,
-];
+import { standardDirectives } from '@json-render/directives';
 
 // Wire into prompt generation
-const prompt = catalog.prompt({ directives });
+const prompt = catalog.prompt({ directives: standardDirectives });
 
 // Wire into the renderer
 <JSONUIProvider spec={spec} directives={directives}>

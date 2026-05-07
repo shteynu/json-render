@@ -54,11 +54,9 @@ Pass directives to both the renderer (for runtime resolution) and the catalog pr
 
 ```tsx
 import { JSONUIProvider, Renderer } from '@json-render/react';
-import { formatDirective, mathDirective } from '@json-render/directives';
+import { standardDirectives } from '@json-render/directives';
 
-const directives = [formatDirective, mathDirective];
-
-<JSONUIProvider registry={registry} directives={directives}>
+<JSONUIProvider registry={registry} directives={standardDirectives}>
   <Renderer spec={spec} registry={registry} />
 </JSONUIProvider>
 ```
@@ -86,16 +84,13 @@ Each directive's schema is auto-described in the "CUSTOM DYNAMIC VALUES" section
 The `@json-render/directives` package ships ready-to-use directives:
 
 ```typescript
-import {
-  formatDirective,
-  mathDirective,
-  concatDirective,
-  countDirective,
-  truncateDirective,
-  pluralizeDirective,
-  joinDirective,
-  createI18nDirective,
-} from '@json-render/directives';
+import { standardDirectives, createI18nDirective } from '@json-render/directives';
+```
+
+`standardDirectives` includes `$format`, `$math`, `$concat`, `$count`, `$truncate`, `$pluralize`, and `$join`. Add factory directives by spreading:
+
+```typescript
+const directives = [...standardDirectives, createI18nDirective(config)];
 ```
 
 See the [API reference](/docs/api/directives) for details on each directive.
