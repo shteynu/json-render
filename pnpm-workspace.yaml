@@ -1,11 +1,11 @@
 minimumReleaseAge: 2880
 engineStrict: true
-onlyBuiltDependencies:
-  - "@mongodb-js/zstd"
-  - esbuild
-  - msw
-  - node-liblzma
-  - sharp
+allowBuilds:
+  "@mongodb-js/zstd": false
+  esbuild: false
+  msw: false
+  node-liblzma: false
+  sharp: false
 
 packages:
   - "apps/*"
