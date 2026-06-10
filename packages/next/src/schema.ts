@@ -212,15 +212,19 @@ export const schema = defineSchema(
   (s) => ({
     spec: s.object({
       /** Root-level metadata applied as defaults */
-      metadata: s.object({
-        title: s.any(),
-        description: s.string(),
-        keywords: s.array(s.string()),
-        openGraph: s.any(),
-        twitter: s.any(),
-        robots: s.any(),
-        icons: s.any(),
-      }),
+      metadata: {
+        ...s.object({
+          title: { ...s.any(), ...s.optional() },
+          description: { ...s.string(), ...s.optional() },
+          keywords: { ...s.array(s.string()), ...s.optional() },
+          openGraph: { ...s.any(), ...s.optional() },
+          twitter: { ...s.any(), ...s.optional() },
+          robots: { ...s.any(), ...s.optional() },
+          alternates: { ...s.any(), ...s.optional() },
+          icons: { ...s.any(), ...s.optional() },
+        }),
+        ...s.optional(),
+      },
 
       /** Route definitions keyed by URL pattern */
       routes: s.record(
@@ -236,43 +240,46 @@ export const schema = defineSchema(
                 visible: { ...s.any(), ...s.optional() },
               }),
             ),
-            state: s.any(),
+            state: { ...s.any(), ...s.optional() },
           }),
           /** Per-route metadata */
-          metadata: s.any(),
+          metadata: { ...s.any(), ...s.optional() },
           /** Layout key */
-          layout: s.string(),
+          layout: { ...s.string(), ...s.optional() },
           /** Loading state element tree */
-          loading: s.any(),
+          loading: { ...s.any(), ...s.optional() },
           /** Error state element tree */
-          error: s.any(),
+          error: { ...s.any(), ...s.optional() },
           /** Not-found element tree */
-          notFound: s.any(),
+          notFound: { ...s.any(), ...s.optional() },
           /** Server-side data loader name */
-          loader: s.string(),
+          loader: { ...s.string(), ...s.optional() },
           /** Static params for SSG */
-          staticParams: s.any(),
+          staticParams: { ...s.any(), ...s.optional() },
         }),
       ),
 
       /** Reusable layout element trees */
-      layouts: s.record(
-        s.object({
-          root: s.string(),
-          elements: s.record(
-            s.object({
-              type: s.ref("catalog.components"),
-              props: s.propsOf("catalog.components"),
-              children: s.array(s.string()),
-              visible: { ...s.any(), ...s.optional() },
-            }),
-          ),
-          state: s.any(),
-        }),
-      ),
+      layouts: {
+        ...s.record(
+          s.object({
+            root: s.string(),
+            elements: s.record(
+              s.object({
+                type: s.ref("catalog.components"),
+                props: s.propsOf("catalog.components"),
+                children: s.array(s.string()),
+                visible: { ...s.any(), ...s.optional() },
+              }),
+            ),
+            state: { ...s.any(), ...s.optional() },
+          }),
+        ),
+        ...s.optional(),
+      },
 
       /** Global initial state */
-      state: s.any(),
+      state: { ...s.any(), ...s.optional() },
     }),
 
     catalog: s.object({
