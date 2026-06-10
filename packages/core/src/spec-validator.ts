@@ -1,4 +1,5 @@
 import type { Spec, UIElement } from "./types";
+import { getByPath } from "./types";
 import { VisibilityConditionStrictSchema } from "./visibility";
 
 // =============================================================================
@@ -138,7 +139,7 @@ export function validateSpec(
         });
       }
       if (spec.state !== undefined) {
-        const value = getStatePath(spec.state, element.repeat.statePath);
+        const value = getByPath(spec.state, element.repeat.statePath);
         if (!Array.isArray(value)) {
           issues.push({
             severity: "error",
@@ -375,15 +376,4 @@ export function formatSpecIssues(issues: SpecIssue[]): string {
     lines.push(`- ${issue.message}`);
   }
   return lines.join("\n");
-}
-
-/** Minimal JSON Pointer lookup for repeat statePath checks ("/a/b/0"). */
-function getStatePath(state: Record<string, unknown>, path: string): unknown {
-  const parts = path.replace(/^\//, "").split("/").filter(Boolean);
-  let current: unknown = state;
-  for (const part of parts) {
-    if (current === null || typeof current !== "object") return undefined;
-    current = (current as Record<string, unknown>)[part];
-  }
-  return current;
 }

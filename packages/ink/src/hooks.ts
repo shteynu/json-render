@@ -417,10 +417,18 @@ export function useUIStream({
           }
 
           // ---------------------------------------------------------------
-          // Post-stream: auto-fix deterministic issues (no retry needed)
+          // Post-stream: auto-fix deterministic issues. Lossless fixes (field
+          // relocations) apply immediately. Lossy fixes (pruned content) are
+          // held back while retries remain so validation fails and the model
+          // is asked to repair; they apply as a last resort once retries are
+          // exhausted, trading dropped content for a renderable spec.
           // ---------------------------------------------------------------
-          const { spec: fixedSpec, fixes } = autoFixSpec(currentSpec);
-          if (fixes.length > 0) {
+          const { spec: fixedSpec, fixDetails } = autoFixSpec(currentSpec);
+          const hasLossyFixes = fixDetails.some((fix) => fix.lossy);
+          if (
+            fixDetails.length > 0 &&
+            (!hasLossyFixes || retriesUsed >= maxRetries)
+          ) {
             currentSpec = fixedSpec;
             setSpec({ ...currentSpec });
           }
