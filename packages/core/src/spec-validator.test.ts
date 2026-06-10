@@ -147,6 +147,97 @@ describe("validateSpec", () => {
 // autoFixSpec
 // =============================================================================
 
+describe("repeat validation", () => {
+  it("rejects repeat without children", () => {
+    const result = validateSpec({
+      root: "list",
+      state: { items: [{ id: "1" }] },
+      elements: {
+        list: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/items" },
+          children: [],
+        },
+      },
+    });
+    expect(result.valid).toBe(false);
+    expect(
+      result.issues.some((i) => i.code === "repeat_without_children"),
+    ).toBe(true);
+  });
+
+  it("rejects repeat over a non-array state value", () => {
+    const result = validateSpec({
+      root: "list",
+      state: { items: { "1": { title: "x" } } },
+      elements: {
+        list: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/items" },
+          children: ["card"],
+        },
+        card: { type: "Text", props: {}, children: [] },
+      },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues.some((i) => i.code === "repeat_state_mismatch")).toBe(
+      true,
+    );
+  });
+
+  it("rejects repeat over a missing state path when state is provided", () => {
+    const result = validateSpec({
+      root: "list",
+      state: { other: [] },
+      elements: {
+        list: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/items" },
+          children: ["card"],
+        },
+        card: { type: "Text", props: {}, children: [] },
+      },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues.some((i) => i.code === "repeat_state_mismatch")).toBe(
+      true,
+    );
+  });
+
+  it("accepts a well-formed repeat and skips state checks when no state is provided", () => {
+    const withState = validateSpec({
+      root: "list",
+      state: { items: [{ id: "1" }] },
+      elements: {
+        list: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/items" },
+          children: ["card"],
+        },
+        card: { type: "Text", props: {}, children: [] },
+      },
+    });
+    expect(withState.valid).toBe(true);
+    const runtimeState = validateSpec({
+      root: "list",
+      elements: {
+        list: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/items" },
+          children: ["card"],
+        },
+        card: { type: "Text", props: {}, children: [] },
+      },
+    });
+    expect(runtimeState.valid).toBe(true);
+  });
+});
+
 describe("visible condition validation", () => {
   const base = (visible: unknown): Spec => ({
     root: "root",

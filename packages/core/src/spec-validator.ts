@@ -26,6 +26,8 @@ export interface SpecIssue {
     | "root_not_found"
     | "missing_child"
     | "invalid_visible"
+    | "repeat_without_children"
+    | "repeat_state_mismatch"
     | "visible_in_props"
     | "orphaned_element"
     | "empty_spec"
@@ -119,6 +121,30 @@ export function validateSpec(
             message: `Element "${key}" references child "${childKey}" which does not exist in the elements map.`,
             elementKey: key,
             code: "missing_child",
+          });
+        }
+      }
+    }
+
+    // 3b. Repeat containers that can never render anything. Both shapes pass
+    // schema validation but produce silently empty regions at runtime.
+    if (element.repeat !== undefined) {
+      if (!element.children || element.children.length === 0) {
+        issues.push({
+          severity: "error",
+          message: `Element "${key}" has "repeat" but no children. The repeated template must be a child element: add a child that renders one item (it may read fields with {"$item": "field"}).`,
+          elementKey: key,
+          code: "repeat_without_children",
+        });
+      }
+      if (spec.state !== undefined) {
+        const value = getStatePath(spec.state, element.repeat.statePath);
+        if (!Array.isArray(value)) {
+          issues.push({
+            severity: "error",
+            message: `Element "${key}" repeats over "${element.repeat.statePath}" but state${value === undefined ? " has no value there" : ` has a ${typeof value} there`}. Repeat statePath must reference an array in state; add sample items to state at that path.`,
+            elementKey: key,
+            code: "repeat_state_mismatch",
           });
         }
       }
@@ -349,4 +375,15 @@ export function formatSpecIssues(issues: SpecIssue[]): string {
     lines.push(`- ${issue.message}`);
   }
   return lines.join("\n");
+}
+
+/** Minimal JSON Pointer lookup for repeat statePath checks ("/a/b/0"). */
+function getStatePath(state: Record<string, unknown>, path: string): unknown {
+  const parts = path.replace(/^\//, "").split("/").filter(Boolean);
+  let current: unknown = state;
+  for (const part of parts) {
+    if (current === null || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
 }
