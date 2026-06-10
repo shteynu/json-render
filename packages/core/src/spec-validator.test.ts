@@ -156,10 +156,17 @@ describe("autoFixSpec", () => {
         text: { type: "Text", props: { text: "hi" }, children: [] },
       },
     };
-    const { spec: fixed, fixes } = autoFixSpec(spec);
+    const { spec: fixed, fixes, fixDetails } = autoFixSpec(spec);
     expect(fixed.elements.root!.children).toEqual(["text"]);
     expect(fixes).toEqual([
       'Removed reference to undefined element "ghost" from children of "root".',
+    ]);
+    expect(fixDetails).toEqual([
+      {
+        message:
+          'Removed reference to undefined element "ghost" from children of "root".',
+        lossy: true,
+      },
     ]);
     expect(validateSpec(fixed).valid).toBe(true);
   });
@@ -175,6 +182,25 @@ describe("autoFixSpec", () => {
     const { spec: fixed, fixes } = autoFixSpec(spec);
     expect(fixed.elements.root!.children).toEqual(["text"]);
     expect(fixes).toEqual([]);
+  });
+
+  it("classifies field relocations as lossless", () => {
+    const { fixDetails } = autoFixSpec({
+      root: "root",
+      elements: {
+        root: {
+          type: "Text",
+          props: { text: "hi", visible: true },
+          children: [],
+        },
+      },
+    });
+    expect(fixDetails).toEqual([
+      {
+        message: 'Moved "visible" from props to element level on "root".',
+        lossy: false,
+      },
+    ]);
   });
 
   it("moves visible from props to element level", () => {

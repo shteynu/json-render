@@ -209,11 +209,29 @@ export function validateSpec(
  *
  * Returns the fixed spec and a list of fixes applied.
  */
+export interface SpecFix {
+  message: string;
+  /**
+   * Lossy fixes change what renders (e.g. pruning a dangling child
+   * reference); lossless fixes only relocate misplaced fields. Callers with a
+   * repair loop should prefer re-prompting over accepting lossy fixes, and
+   * use the lossy-fixed spec as a last resort.
+   */
+  lossy: boolean;
+}
+
 export function autoFixSpec(spec: Spec): {
   spec: Spec;
   fixes: string[];
+  /** Structured fix records; fixes is the plain-message projection. */
+  fixDetails: SpecFix[];
 } {
-  const fixes: string[] = [];
+  const fixDetails: SpecFix[] = [];
+  const fixes = {
+    push(message: string, lossy = false) {
+      fixDetails.push({ message, lossy });
+    },
+  };
   const fixedElements: Record<string, UIElement> = {};
 
   for (const [key, element] of Object.entries(spec.elements)) {
@@ -288,6 +306,7 @@ export function autoFixSpec(spec: Spec): {
       if (!(child in fixedElements)) {
         fixes.push(
           `Removed reference to undefined element "${child}" from children of "${key}".`,
+          true,
         );
       }
     }
@@ -296,7 +315,8 @@ export function autoFixSpec(spec: Spec): {
 
   return {
     spec: { root: spec.root, elements: fixedElements, state: spec.state },
-    fixes,
+    fixes: fixDetails.map((fix) => fix.message),
+    fixDetails,
   };
 }
 
