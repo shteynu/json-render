@@ -322,6 +322,23 @@ describe("autoFixSpec", () => {
     expect(fixes).toEqual([]);
   });
 
+  it("withholds lossy fixes when options.lossy is false", () => {
+    const spec: Spec = {
+      root: "root",
+      elements: {
+        root: {
+          type: "Card",
+          props: { visible: true },
+          children: ["ghost"],
+        },
+      },
+    };
+    const { spec: fixed, fixDetails } = autoFixSpec(spec, { lossy: false });
+    expect(fixed.elements.root!.children).toEqual(["ghost"]);
+    expect(fixDetails.every((fix) => !fix.lossy)).toBe(true);
+    expect(fixDetails.length).toBeGreaterThan(0);
+  });
+
   it("classifies field relocations as lossless", () => {
     const { fixDetails } = autoFixSpec({
       root: "root",

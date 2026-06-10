@@ -423,12 +423,10 @@ export function useUIStream({
           // is asked to repair; they apply as a last resort once retries are
           // exhausted, trading dropped content for a renderable spec.
           // ---------------------------------------------------------------
-          const { spec: fixedSpec, fixDetails } = autoFixSpec(currentSpec);
-          const hasLossyFixes = fixDetails.some((fix) => fix.lossy);
-          if (
-            fixDetails.length > 0 &&
-            (!hasLossyFixes || retriesUsed >= maxRetries)
-          ) {
+          const { spec: fixedSpec, fixDetails } = autoFixSpec(currentSpec, {
+            lossy: retriesUsed >= maxRetries,
+          });
+          if (fixDetails.length > 0) {
             currentSpec = fixedSpec;
             setSpec({ ...currentSpec });
           }

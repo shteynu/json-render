@@ -69,6 +69,7 @@ export {
   VisibilityConditionSchema,
   VisibilityConditionStrictSchema,
   conditionUsesItemScope,
+  splitRepeatVisibility,
   evaluateVisibility,
   visibility,
 } from "./visibility";

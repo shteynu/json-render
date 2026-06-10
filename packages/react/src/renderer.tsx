@@ -24,7 +24,7 @@ import {
   resolveElementProps,
   resolveBindings,
   resolveActionParam,
-  conditionUsesItemScope,
+  splitRepeatVisibility,
   evaluateVisibility,
   getByPath,
   isDevtoolsActive,
@@ -228,22 +228,21 @@ const ElementRenderer = React.memo(function ElementRenderer({
   }, [ctx, repeatScope, functions, directives]);
 
   // A repeat container whose own visible condition references $item/$index
-  // outside any repeat scope is a per-item filter (models and humans write
-  // {"repeat": ..., "visible": {"$item": "status", "eq": "todo"}} to mean a
-  // filtered list); the condition is applied per item in RepeatChildren
-  // instead of being evaluated (and failing) here.
-  const repeatItemFilter =
-    element.repeat !== undefined &&
-    repeatScope == null &&
-    conditionUsesItemScope(element.visible)
-      ? element.visible
-      : undefined;
+  // outside any repeat scope is (partly) a per-item filter: models and humans
+  // write {"repeat": ..., "visible": {"$item": "status", "eq": "todo"}} to
+  // mean a filtered list. AND-composed $state conjuncts still gate the
+  // container itself so a false gate hides the shell, not just the items.
+  const repeatVisibility =
+    element.repeat !== undefined && repeatScope == null
+      ? splitRepeatVisibility(element.visible)
+      : { container: element.visible, itemFilter: undefined };
+  const repeatItemFilter = repeatVisibility.itemFilter;
 
   // Evaluate visibility (now supports $item/$index inside repeat scopes)
   const isVisible =
-    element.visible === undefined || repeatItemFilter !== undefined
+    repeatVisibility.container === undefined
       ? true
-      : evaluateVisibility(element.visible, fullCtx);
+      : evaluateVisibility(repeatVisibility.container, fullCtx);
 
   // Create emit function that resolves events to action bindings.
   // Must be called before any early return to satisfy Rules of Hooks.

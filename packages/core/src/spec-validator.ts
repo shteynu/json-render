@@ -263,12 +263,25 @@ export interface SpecFix {
   lossy: boolean;
 }
 
-export function autoFixSpec(spec: Spec): {
+export interface AutoFixOptions {
+  /**
+   * Apply lossy fixes (content pruning). Default true. Callers with a repair
+   * loop should pass false while retries remain so the model regenerates the
+   * missing content, then true as a last resort.
+   */
+  lossy?: boolean;
+}
+
+export function autoFixSpec(
+  spec: Spec,
+  options: AutoFixOptions = {},
+): {
   spec: Spec;
   fixes: string[];
   /** Structured fix records; fixes is the plain-message projection. */
   fixDetails: SpecFix[];
 } {
+  const applyLossy = options.lossy !== false;
   const fixDetails: SpecFix[] = [];
   const fixes = {
     push(message: string, lossy = false) {
@@ -341,20 +354,23 @@ export function autoFixSpec(spec: Spec): {
   // Drop references to elements that were never defined. The renderer skips
   // missing children at runtime, so pruning produces the same rendered output
   // while letting the spec pass validation instead of hard-failing.
-  for (const [key, element] of Object.entries(fixedElements)) {
-    if (!element.children || element.children.length === 0) continue;
-    const present = element.children.filter((child) => child in fixedElements);
-    if (present.length === element.children.length) continue;
-    for (const child of element.children) {
-      if (!(child in fixedElements)) {
-        fixes.push(
-          `Removed reference to undefined element "${child}" from children of "${key}".`,
-          true,
-        );
+  if (applyLossy)
+    for (const [key, element] of Object.entries(fixedElements)) {
+      if (!element.children || element.children.length === 0) continue;
+      const present = element.children.filter(
+        (child) => child in fixedElements,
+      );
+      if (present.length === element.children.length) continue;
+      for (const child of element.children) {
+        if (!(child in fixedElements)) {
+          fixes.push(
+            `Removed reference to undefined element "${child}" from children of "${key}".`,
+            true,
+          );
+        }
       }
+      fixedElements[key] = { ...element, children: present };
     }
-    fixedElements[key] = { ...element, children: present };
-  }
 
   return {
     spec: { root: spec.root, elements: fixedElements, state: spec.state },
