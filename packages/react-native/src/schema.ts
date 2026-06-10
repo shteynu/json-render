@@ -23,7 +23,7 @@ export const schema = defineSchema(
           /** Child element keys (flat reference) */
           children: s.array(s.string()),
           /** Visibility condition */
-          visible: s.any(),
+          visible: { ...s.any(), ...s.optional() },
         }),
       ),
     }),
@@ -59,6 +59,7 @@ export const schema = defineSchema(
       // Element integrity
       "CRITICAL INTEGRITY CHECK: Before outputting ANY element that references children, you MUST have already output (or will output) each child as its own element. If an element has children: ['a', 'b'], then elements 'a' and 'b' MUST exist. A missing child element causes that entire branch of the UI to be invisible.",
       "SELF-CHECK: After generating all elements, mentally walk the tree from root. Every key in every children array must resolve to a defined element. If you find a gap, output the missing element immediately.",
+      'REQUIRED FIELDS: Every element MUST include a "children" array. Leaf elements (text, badges, inputs, images) use an empty array: "children": []. Omitting "children" fails validation.',
       'When building repeating content backed by a state array (e.g. todos, posts, cart items), use the "repeat" field on a container element from the AVAILABLE COMPONENTS list. Example: { "type": "<ContainerComponent>", "props": { "gap": 8 }, "repeat": { "statePath": "/todos", "key": "id" }, "children": ["todo-item"] }. Inside repeated children, use { "$item": "field" } to read a field from the current item, and { "$index": true } for the current array index. For two-way binding to an item field use { "$bindItem": "completed" }. Do NOT hardcode individual elements for each array item.',
 
       // Visible field placement

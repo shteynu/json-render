@@ -14,7 +14,7 @@ const testSchema = defineSchema((s) => ({
         type: s.ref("catalog.components"),
         props: s.propsOf("catalog.components"),
         children: s.array(s.string()),
-        visible: s.any(),
+        visible: { ...s.any(), ...s.optional() },
       }),
     ),
   }),
@@ -581,6 +581,26 @@ describe("catalog.validate", () => {
     const result = catalog.validate(spec);
     expect(result.success).toBe(true);
     expect(result.data).toEqual(spec);
+  });
+
+  it("accepts elements without visible regardless of zod version (z.any() keys became nonoptional in zod 4.4)", () => {
+    const result = catalog.validate({
+      root: "text-1",
+      elements: {
+        "text-1": { type: "Text", props: { content: "Hello" }, children: [] },
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("still requires children on every element", () => {
+    const result = catalog.validate({
+      root: "text-1",
+      elements: {
+        "text-1": { type: "Text", props: { content: "Hello" } },
+      },
+    });
+    expect(result.success).toBe(false);
   });
 
   it("rejects spec with wrong root type", () => {

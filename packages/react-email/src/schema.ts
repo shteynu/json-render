@@ -18,7 +18,7 @@ export const schema = defineSchema(
           type: s.ref("catalog.components"),
           props: s.propsOf("catalog.components"),
           children: s.array(s.string()),
-          visible: s.any(),
+          visible: { ...s.any(), ...s.optional() },
         }),
       ),
     }),
@@ -44,6 +44,7 @@ export const schema = defineSchema(
       "Use Heading (h1-h6) and Text for all text content. Raw strings are not supported.",
       "Button renders as a link styled as a button. Always provide both text and href.",
       "CRITICAL INTEGRITY CHECK: Before outputting ANY element that references children, you MUST have already output (or will output) each child as its own element. If an element has children: ['a', 'b'], then elements 'a' and 'b' MUST exist.",
+      'REQUIRED FIELDS: Every element MUST include a "children" array. Leaf elements (text, badges, inputs, images) use an empty array: "children": []. Omitting "children" fails validation.',
     ],
   },
 );
