@@ -322,6 +322,28 @@ describe("autoFixSpec", () => {
     expect(fixes).toEqual([]);
   });
 
+  it("does not prune a repeat container down to zero children", () => {
+    const spec: Spec = {
+      root: "list",
+      state: { items: [{ id: "1" }] },
+      elements: {
+        list: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/items" },
+          children: ["ghost"],
+        },
+      },
+    };
+    const { spec: fixed, fixDetails } = autoFixSpec(spec);
+    expect(fixed.elements.list!.children).toEqual(["ghost"]);
+    expect(fixDetails).toEqual([]);
+    // The real problem (missing template) stays visible to the repair loop.
+    const result = validateSpec(fixed);
+    expect(result.valid).toBe(false);
+    expect(result.issues.some((i) => i.code === "missing_child")).toBe(true);
+  });
+
   it("withholds lossy fixes when options.lossy is false", () => {
     const spec: Spec = {
       root: "root",

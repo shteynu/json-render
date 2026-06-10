@@ -563,6 +563,21 @@ export function useUIStream({
           // continue loop
         }
 
+        // If retries were exhausted and validation still fails, report error
+        // instead of silently treating partial/invalid specs as complete.
+        if (enableValidation && retriesUsed >= maxRetries && currentSpec.root) {
+          const finalValidation = validateSpec(currentSpec);
+          if (!finalValidation.valid) {
+            const issueText = formatSpecIssues(finalValidation.issues);
+            const validationError = new Error(
+              `Spec validation failed after ${maxRetries} retries:\n${issueText}`,
+            );
+            setError(validationError);
+            onError?.(validationError);
+            return;
+          }
+        }
+
         onComplete?.(currentSpec);
       } catch (err) {
         if ((err as Error).name === "AbortError") {

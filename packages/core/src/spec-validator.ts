@@ -361,6 +361,12 @@ export function autoFixSpec(
         (child) => child in fixedElements,
       );
       if (present.length === element.children.length) continue;
+      if (element.repeat !== undefined && present.length === 0) {
+        // Pruning every child of a repeat container would only trade the
+        // missing_child error for repeat_without_children; keep the dangling
+        // reference so repair targets the real problem (the missing template).
+        continue;
+      }
       for (const child of element.children) {
         if (!(child in fixedElements)) {
           fixes.push(
