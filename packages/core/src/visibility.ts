@@ -70,6 +70,28 @@ export const VisibilityConditionSchema: z.ZodType<VisibilityCondition> = z.lazy(
     ]),
 );
 
+const StrictSingleConditionSchema = z.union([
+  z.strictObject({ $state: z.string(), ...comparisonOps }),
+  z.strictObject({ $item: z.string(), ...comparisonOps }),
+  z.strictObject({ $index: z.literal(true), ...comparisonOps }),
+]);
+
+/**
+ * Strict variant for spec validation: rejects unknown keys, so malformed
+ * conditions (e.g. mixing $state and $item in one object) are caught at
+ * validation time instead of silently evaluating to hidden at runtime.
+ */
+export const VisibilityConditionStrictSchema: z.ZodType<VisibilityCondition> =
+  z.lazy(() =>
+    z.union([
+      z.boolean(),
+      StrictSingleConditionSchema,
+      z.array(StrictSingleConditionSchema),
+      z.strictObject({ $and: z.array(VisibilityConditionStrictSchema) }),
+      z.strictObject({ $or: z.array(VisibilityConditionStrictSchema) }),
+    ]),
+  );
+
 // =============================================================================
 // Context
 // =============================================================================

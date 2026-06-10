@@ -147,6 +147,53 @@ describe("validateSpec", () => {
 // autoFixSpec
 // =============================================================================
 
+describe("visible condition validation", () => {
+  const base = (visible: unknown): Spec => ({
+    root: "root",
+    elements: {
+      root: {
+        type: "Text",
+        props: { text: "hi" },
+        children: [],
+        visible: visible as Spec["elements"][string]["visible"],
+      },
+    },
+  });
+
+  it("accepts documented forms", () => {
+    for (const visible of [
+      true,
+      false,
+      { $state: "/tab", eq: "home" },
+      { $item: "status", eq: "todo" },
+      { $index: true, lt: 3 },
+      [
+        { $state: "/a", eq: 1 },
+        { $item: "b", neq: 2 },
+      ],
+      { $or: [{ $state: "/a", eq: 1 }, { $and: [{ $item: "b", not: true }] }] },
+    ]) {
+      expect(validateSpec(base(visible)).valid).toBe(true);
+    }
+  });
+
+  it("rejects conditions mixing $state and $item (silently hidden at runtime)", () => {
+    const result = validateSpec(
+      base([{ $state: "/tasks", $item: "status", eq: "todo" }]),
+    );
+    expect(result.valid).toBe(false);
+    expect(
+      result.issues.some((issue) => issue.code === "invalid_visible"),
+    ).toBe(true);
+  });
+
+  it("rejects unknown condition shapes", () => {
+    const result = validateSpec(base({ when: "/tasks", is: "todo" }));
+    expect(result.valid).toBe(false);
+    expect(result.issues[0]!.code).toBe("invalid_visible");
+  });
+});
+
 describe("autoFixSpec", () => {
   it("prunes children references to undefined elements", () => {
     const spec: Spec = {

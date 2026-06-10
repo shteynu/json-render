@@ -1,4 +1,5 @@
 import type { Spec, UIElement } from "./types";
+import { VisibilityConditionStrictSchema } from "./visibility";
 
 // =============================================================================
 // Spec Structural Validation
@@ -24,6 +25,7 @@ export interface SpecIssue {
     | "missing_root"
     | "root_not_found"
     | "missing_child"
+    | "invalid_visible"
     | "visible_in_props"
     | "orphaned_element"
     | "empty_spec"
@@ -120,6 +122,20 @@ export function validateSpec(
           });
         }
       }
+    }
+
+    // 3b. Malformed visible condition. Unrecognized shapes silently evaluate
+    // to hidden at runtime, so catch them here with a repairable message.
+    if (
+      element.visible !== undefined &&
+      !VisibilityConditionStrictSchema.safeParse(element.visible).success
+    ) {
+      issues.push({
+        severity: "error",
+        message: `Element "${key}" has an invalid "visible" condition: ${JSON.stringify(element.visible)}. Valid forms: true, false, {"$state":"/path","eq":value}, {"$item":"field","eq":value}, {"$index":true,"eq":n}, an array of those (AND), or {"$and":[...]} / {"$or":[...]}. Use exactly one of $state, $item, or $index per condition object.`,
+        elementKey: key,
+        code: "invalid_visible",
+      });
     }
 
     // 3b. `visible` inside props
