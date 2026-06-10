@@ -148,6 +148,35 @@ describe("validateSpec", () => {
 // =============================================================================
 
 describe("autoFixSpec", () => {
+  it("prunes children references to undefined elements", () => {
+    const spec: Spec = {
+      root: "root",
+      elements: {
+        root: { type: "Card", props: {}, children: ["text", "ghost"] },
+        text: { type: "Text", props: { text: "hi" }, children: [] },
+      },
+    };
+    const { spec: fixed, fixes } = autoFixSpec(spec);
+    expect(fixed.elements.root!.children).toEqual(["text"]);
+    expect(fixes).toEqual([
+      'Removed reference to undefined element "ghost" from children of "root".',
+    ]);
+    expect(validateSpec(fixed).valid).toBe(true);
+  });
+
+  it("leaves intact children untouched", () => {
+    const spec: Spec = {
+      root: "root",
+      elements: {
+        root: { type: "Card", props: {}, children: ["text"] },
+        text: { type: "Text", props: { text: "hi" }, children: [] },
+      },
+    };
+    const { spec: fixed, fixes } = autoFixSpec(spec);
+    expect(fixed.elements.root!.children).toEqual(["text"]);
+    expect(fixes).toEqual([]);
+  });
+
   it("moves visible from props to element level", () => {
     const spec: Spec = {
       root: "root",

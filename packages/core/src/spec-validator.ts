@@ -277,6 +277,23 @@ export function autoFixSpec(spec: Spec): {
     fixedElements[key] = fixed;
   }
 
+  // Drop references to elements that were never defined. The renderer skips
+  // missing children at runtime, so pruning produces the same rendered output
+  // while letting the spec pass validation instead of hard-failing.
+  for (const [key, element] of Object.entries(fixedElements)) {
+    if (!element.children || element.children.length === 0) continue;
+    const present = element.children.filter((child) => child in fixedElements);
+    if (present.length === element.children.length) continue;
+    for (const child of element.children) {
+      if (!(child in fixedElements)) {
+        fixes.push(
+          `Removed reference to undefined element "${child}" from children of "${key}".`,
+        );
+      }
+    }
+    fixedElements[key] = { ...element, children: present };
+  }
+
   return {
     spec: { root: spec.root, elements: fixedElements, state: spec.state },
     fixes,
