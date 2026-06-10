@@ -24,6 +24,7 @@ import {
   resolveElementProps,
   resolveBindings,
   resolveActionParam,
+  conditionUsesItemScope,
   evaluateVisibility,
   getByPath,
   isDevtoolsActive,
@@ -226,9 +227,21 @@ const ElementRenderer = React.memo(function ElementRenderer({
     return base;
   }, [ctx, repeatScope, functions, directives]);
 
+  // A repeat container whose own visible condition references $item/$index
+  // outside any repeat scope is a per-item filter (models and humans write
+  // {"repeat": ..., "visible": {"$item": "status", "eq": "todo"}} to mean a
+  // filtered list); the condition is applied per item in RepeatChildren
+  // instead of being evaluated (and failing) here.
+  const repeatItemFilter =
+    element.repeat !== undefined &&
+    repeatScope == null &&
+    conditionUsesItemScope(element.visible)
+      ? element.visible
+      : undefined;
+
   // Evaluate visibility (now supports $item/$index inside repeat scopes)
   const isVisible =
-    element.visible === undefined
+    element.visible === undefined || repeatItemFilter !== undefined
       ? true
       : evaluateVisibility(element.visible, fullCtx);
 
@@ -391,6 +404,7 @@ const ElementRenderer = React.memo(function ElementRenderer({
       registry={registry}
       loading={loading}
       fallback={fallback}
+      itemFilter={repeatItemFilter}
     />
   ) : (
     resolvedElement.children?.map((childKey) => {
@@ -459,22 +473,40 @@ function RepeatChildren({
   registry,
   loading,
   fallback,
+  itemFilter,
 }: {
   element: UIElement;
   spec: Spec;
   registry: ComponentRegistry;
   loading?: boolean;
   fallback?: ComponentRenderer;
+  itemFilter?: UIElement["visible"];
 }) {
   const { state } = useStateStore();
+  const { ctx } = useVisibility();
   const repeat = element.repeat!;
   const statePath = repeat.statePath;
 
   const items = (getByPath(state, statePath) as unknown[] | undefined) ?? [];
 
+  // Per-item filter from the container's own $item/$index visible condition.
+  // Original indices are preserved so item state paths still point at the
+  // right array entry.
+  const entries = items
+    .map((itemValue, index) => ({ itemValue, index }))
+    .filter(
+      ({ itemValue, index }) =>
+        itemFilter === undefined ||
+        evaluateVisibility(itemFilter, {
+          ...ctx,
+          repeatItem: itemValue,
+          repeatIndex: index,
+        }),
+    );
+
   return (
     <>
-      {items.map((itemValue, index) => {
+      {entries.map(({ itemValue, index }) => {
         // Use a stable key: prefer key field, fall back to index
         const key =
           repeat.key && typeof itemValue === "object" && itemValue !== null

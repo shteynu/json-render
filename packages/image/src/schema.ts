@@ -42,7 +42,7 @@ export const schema = defineSchema(
       "Satori renders a subset of CSS: flexbox layout, borders, backgrounds, text styling. Absolute positioning is supported via position/top/left/right/bottom.",
       "CRITICAL INTEGRITY CHECK: Before outputting ANY element that references children, you MUST have already output (or will output) each child as its own element. If an element has children: ['a', 'b'], then elements 'a' and 'b' MUST exist.",
       'REQUIRED FIELDS: Every element MUST include a "children" array. Leaf elements (text, badges, inputs, images) use an empty array: "children": []. Omitting "children" fails validation.',
-      'FILTERED LISTS: To render only the items matching a field value (kanban columns, tabbed lists, status sections), put "repeat" on the container and a "visible" condition with $item on the repeated child element: {"$item": "status", "eq": "todo"}. A visible condition object must use exactly one of $state, $item, or $index — never combine them in one object.',
+      'FILTERED LISTS: To render only the items matching a field value (kanban columns, tabbed lists, status sections), put "repeat" and a "visible" condition with $item on the same container element: {"repeat": {"statePath": "/tasks", "key": "id"}, "visible": {"$item": "status", "eq": "todo"}} renders one child per matching item. A visible condition object must use exactly one of $state, $item, or $index — never combine them in one object.',
     ],
   },
 );

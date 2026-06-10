@@ -81,6 +81,30 @@ const StrictSingleConditionSchema = z.union([
  * conditions (e.g. mixing $state and $item in one object) are caught at
  * validation time instead of silently evaluating to hidden at runtime.
  */
+/**
+ * True when a condition references the repeat-item scope ($item or $index)
+ * anywhere in its tree. Renderers use this to apply a repeat container's own
+ * visible condition as a per-item filter instead of evaluating it (and
+ * failing) outside the repeat scope.
+ */
+export function conditionUsesItemScope(
+  condition: VisibilityCondition | undefined,
+): boolean {
+  if (condition === undefined || typeof condition === "boolean") return false;
+  if (Array.isArray(condition)) return condition.some(conditionUsesItemScope);
+  if (typeof condition !== "object" || condition === null) return false;
+  if ("$item" in condition || "$index" in condition) return true;
+  if ("$and" in condition)
+    return (condition as { $and: VisibilityCondition[] }).$and.some(
+      conditionUsesItemScope,
+    );
+  if ("$or" in condition)
+    return (condition as { $or: VisibilityCondition[] }).$or.some(
+      conditionUsesItemScope,
+    );
+  return false;
+}
+
 export const VisibilityConditionStrictSchema: z.ZodType<VisibilityCondition> =
   z.lazy(() =>
     z.union([
