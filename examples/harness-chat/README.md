@@ -25,12 +25,9 @@ Because `HarnessAgent.stream()` returns a standard AI SDK `StreamTextResult`, th
 
 The AI SDK harness packages are **experimental canary releases**; expect breaking changes.
 
-1. Link the project to Vercel so the sandbox provider can authenticate:
-
-   ```bash
-   vercel link
-   vercel env pull
-   ```
+1. Give the sandbox provider Vercel credentials, either:
+   - Be logged in with the Vercel CLI (`vercel login`) and run the dev server in a terminal (the SDK only falls back to CLI auth when attached to a TTY). It uses or creates a `vercel-sandbox-default-project` in your personal scope.
+   - Or link a project and pull an OIDC token: `vercel link && vercel env pull`.
 
 2. Provide model credentials for the Claude Code runtime, either:
    - `AI_GATEWAY_API_KEY` (Vercel AI Gateway), or
