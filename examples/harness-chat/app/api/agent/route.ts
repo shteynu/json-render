@@ -4,7 +4,8 @@ import {
   type UIMessage,
 } from "ai";
 import { pipeJsonRender } from "@json-render/core";
-import { agent, getSession, dropSession } from "@/lib/agent";
+import { getSession, dropSession } from "@/lib/agent";
+import { DEFAULT_AGENT_ID, isAgentId } from "@/lib/agents";
 
 // Harness turns are long: the agent boots a sandbox, edits files, and runs
 // commands before answering.
@@ -37,9 +38,13 @@ export async function POST(req: Request) {
     );
   }
 
+  // The agent is chosen on the first message and locked for the chat: an
+  // existing session ignores `body.agent` and keeps its original agent.
+  const requestedAgent = isAgentId(body.agent) ? body.agent : DEFAULT_AGENT_ID;
+
   // The harness session owns its own conversation history, so each turn
   // sends only the fresh user input -- not the whole transcript.
-  const session = await getSession(chatId);
+  const { session, agent } = await getSession(chatId, requestedAgent);
   const result = await agent.stream({ prompt, session });
 
   const stream = createUIMessageStream({

@@ -173,6 +173,54 @@ export const agentReportCatalog = defineCatalog(schema, {
       description: "Test run summary with optional failure details",
       example: { passed: 11, failed: 1, skipped: 0, failures: null },
     },
+
+    BarChart: {
+      props: z.object({
+        title: z.string().nullable(),
+        data: z.array(
+          z.object({
+            label: z.string(),
+            value: z.number(),
+          }),
+        ),
+        unit: z.string().nullable(),
+      }),
+      description:
+        "Bar chart comparing labeled numeric values (e.g. bundle size per module, benchmark per case). Pass already-computed numbers; do not aggregate raw data.",
+      example: {
+        title: "Build time by package",
+        data: [
+          { label: "core", value: 1.2 },
+          { label: "react", value: 2.8 },
+          { label: "cli", value: 0.6 },
+        ],
+        unit: "s",
+      },
+    },
+
+    LineChart: {
+      props: z.object({
+        title: z.string().nullable(),
+        data: z.array(
+          z.object({
+            label: z.string(),
+            value: z.number(),
+          }),
+        ),
+        unit: z.string().nullable(),
+      }),
+      description:
+        "Line chart showing a numeric value as it changes across an ordered sequence (e.g. coverage per commit, latency over runs). Points are connected in array order.",
+      example: {
+        title: "Coverage over commits",
+        data: [
+          { label: "a1b2", value: 71 },
+          { label: "c3d4", value: 78 },
+          { label: "e5f6", value: 84 },
+        ],
+        unit: "%",
+      },
+    },
   },
   actions: {},
 });

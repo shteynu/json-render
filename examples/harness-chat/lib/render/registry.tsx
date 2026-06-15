@@ -53,6 +53,41 @@ const fileChangeMeta = {
   deleted: { icon: FileMinus, label: "deleted", className: "text-red-600" },
 } as const;
 
+type ChartPoint = { label: string; value: number };
+
+// Charts are intentionally monochrome — they ink in the foreground color.
+const CHART_COLOR = "var(--foreground)";
+
+/** Format a value compactly, appending an optional unit. */
+function formatChartValue(value: number, unit: string | null): string {
+  const rounded =
+    Math.abs(value) >= 100 || Number.isInteger(value)
+      ? Math.round(value).toString()
+      : value.toFixed(1);
+  return unit ? `${rounded}${unit}` : rounded;
+}
+
+function ChartFrame({
+  title,
+  children,
+}: {
+  title: string | null;
+  children: React.ReactNode;
+}) {
+  // No border/background of its own: a chart is content, not a card. This
+  // keeps it from looking like a card nested inside a Card.
+  return (
+    <div>
+      {title && (
+        <div className="mb-2.5 text-xs font-medium text-muted-foreground">
+          {title}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
 export const { registry } = defineRegistry(agentReportCatalog, {
   actions: {},
   components: {
@@ -79,9 +114,11 @@ export const { registry } = defineRegistry(agentReportCatalog, {
     ),
 
     Card: ({ props, children }) => (
-      <div className="rounded-xl border bg-card p-4 shadow-sm">
+      <div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-elevated backdrop-blur-sm">
         {props.title && (
-          <h3 className="text-sm font-semibold mb-1">{props.title}</h3>
+          <h3 className="text-sm font-semibold tracking-tight mb-1">
+            {props.title}
+          </h3>
         )}
         {props.description && (
           <p className="text-sm text-muted-foreground mb-3">
@@ -140,11 +177,17 @@ export const { registry } = defineRegistry(agentReportCatalog, {
     },
 
     Metric: ({ props }) => (
-      <div className="rounded-lg border bg-card px-3 py-2.5">
-        <div className="text-xs text-muted-foreground">{props.label}</div>
-        <div className="text-xl font-semibold tabular-nums">{props.value}</div>
+      <div className="rounded-xl border border-border/70 bg-gradient-to-b from-card to-muted/40 px-3.5 py-3">
+        <div className="text-xs font-medium text-muted-foreground">
+          {props.label}
+        </div>
+        <div className="mt-0.5 text-2xl font-semibold tracking-tight tabular-nums">
+          {props.value}
+        </div>
         {props.detail && (
-          <div className="text-xs text-muted-foreground">{props.detail}</div>
+          <div className="text-xs text-muted-foreground tabular-nums">
+            {props.detail}
+          </div>
         )}
       </div>
     ),
@@ -283,6 +326,115 @@ export const { registry } = defineRegistry(agentReportCatalog, {
         )}
       </div>
     ),
+
+    BarChart: ({ props }) => {
+      const data = props.data as ChartPoint[];
+      const color = CHART_COLOR;
+      const max = Math.max(...data.map((d) => d.value), 0) || 1;
+
+      return (
+        <ChartFrame title={props.title}>
+          {data.length === 0 ? (
+            <div className="text-xs text-muted-foreground">No data</div>
+          ) : (
+            <div className="flex h-40 gap-2.5">
+              {data.map((d, i) => (
+                <div
+                  key={i}
+                  className="flex h-full min-w-0 flex-1 flex-col items-center gap-1.5"
+                >
+                  <div className="text-[11px] tabular-nums text-muted-foreground">
+                    {formatChartValue(d.value, props.unit)}
+                  </div>
+                  <div className="flex min-h-0 w-full flex-1 items-end">
+                    <div
+                      className="w-full rounded-sm"
+                      style={{
+                        height: `${Math.max((d.value / max) * 100, 1.5)}%`,
+                        backgroundColor: color,
+                      }}
+                    />
+                  </div>
+                  <div className="w-full truncate text-center text-[11px] text-muted-foreground">
+                    {d.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ChartFrame>
+      );
+    },
+
+    LineChart: ({ props }) => {
+      const data = props.data as ChartPoint[];
+      const color = CHART_COLOR;
+
+      const W = 100;
+      const H = 40;
+      const values = data.map((d) => d.value);
+      const max = Math.max(...values, 0);
+      const min = Math.min(...values, 0);
+      const span = max - min || 1;
+
+      // Map each point into the viewBox; single point sits centered.
+      const points = data.map((d, i) => {
+        const x = data.length === 1 ? W / 2 : (i / (data.length - 1)) * W;
+        const y = H - ((d.value - min) / span) * H;
+        return { x, y };
+      });
+      const line = points.map((p) => `${p.x},${p.y}`).join(" ");
+      const area = `0,${H} ${line} ${W},${H}`;
+
+      const first = data[0];
+      const last = data[data.length - 1];
+
+      return (
+        <ChartFrame title={props.title}>
+          {!first || !last ? (
+            <div className="text-xs text-muted-foreground">No data</div>
+          ) : (
+            <>
+              <svg
+                viewBox={`0 0 ${W} ${H}`}
+                preserveAspectRatio="none"
+                className="h-28 w-full"
+                role="img"
+              >
+                <polygon points={area} fill={color} fillOpacity={0.06} />
+                <polyline
+                  points={line}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={1.5}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                <span className="truncate">
+                  {first.label}
+                  <span className="tabular-nums">
+                    {" "}
+                    · {formatChartValue(first.value, props.unit)}
+                  </span>
+                </span>
+                {data.length > 1 && (
+                  <span className="truncate">
+                    {last.label}
+                    <span className="tabular-nums">
+                      {" "}
+                      · {formatChartValue(last.value, props.unit)}
+                    </span>
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </ChartFrame>
+      );
+    },
   },
 });
 
