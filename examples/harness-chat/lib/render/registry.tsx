@@ -330,7 +330,11 @@ export const { registry } = defineRegistry(agentReportCatalog, {
     BarChart: ({ props }) => {
       const data = props.data as ChartPoint[];
       const color = CHART_COLOR;
-      const max = Math.max(...data.map((d) => d.value), 0) || 1;
+      const values = data.map((d) => d.value);
+      const max = Math.max(...values, 0);
+      const min = Math.min(...values, 0);
+      const span = max - min || 1;
+      const zeroTop = ((max - 0) / span) * 100;
 
       return (
         <ChartFrame title={props.title}>
@@ -338,28 +342,52 @@ export const { registry } = defineRegistry(agentReportCatalog, {
             <div className="text-xs text-muted-foreground">No data</div>
           ) : (
             <div className="flex h-40 gap-2.5">
-              {data.map((d, i) => (
-                <div
-                  key={i}
-                  className="flex h-full min-w-0 flex-1 flex-col items-center gap-1.5"
-                >
-                  <div className="text-[11px] tabular-nums text-muted-foreground">
-                    {formatChartValue(d.value, props.unit)}
+              {data.map((d, i) => {
+                const rawHeight = (Math.abs(d.value) / span) * 100;
+                const availableHeight = d.value >= 0 ? zeroTop : 100 - zeroTop;
+                const height =
+                  d.value === 0
+                    ? 0
+                    : Math.min(Math.max(rawHeight, 1.5), availableHeight);
+                const top = d.value >= 0 ? zeroTop - height : zeroTop;
+                return (
+                  <div
+                    key={i}
+                    className="flex h-full min-w-0 flex-1 flex-col items-center gap-1.5"
+                  >
+                    <div className="text-[11px] tabular-nums text-muted-foreground">
+                      {formatChartValue(d.value, props.unit)}
+                    </div>
+                    <div className="relative min-h-0 w-full flex-1">
+                      <div
+                        className="absolute inset-x-0 border-t border-muted-foreground/25"
+                        style={{ top: `${zeroTop}%` }}
+                      />
+                      {d.value === 0 ? (
+                        <div
+                          className="absolute inset-x-0 h-px"
+                          style={{
+                            top: `${zeroTop}%`,
+                            backgroundColor: color,
+                          }}
+                        />
+                      ) : (
+                        <div
+                          className="absolute inset-x-0 rounded-sm"
+                          style={{
+                            top: `${top}%`,
+                            height: `${height}%`,
+                            backgroundColor: color,
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="w-full truncate text-center text-[11px] text-muted-foreground">
+                      {d.label}
+                    </div>
                   </div>
-                  <div className="flex min-h-0 w-full flex-1 items-end">
-                    <div
-                      className="w-full rounded-sm"
-                      style={{
-                        height: `${Math.max((d.value / max) * 100, 1.5)}%`,
-                        backgroundColor: color,
-                      }}
-                    />
-                  </div>
-                  <div className="w-full truncate text-center text-[11px] text-muted-foreground">
-                    {d.label}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ChartFrame>

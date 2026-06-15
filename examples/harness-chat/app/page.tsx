@@ -391,34 +391,46 @@ function MessageBubble({
 export default function HarnessChatPage() {
   const [input, setInput] = useState("");
   const [agentId, setAgentId] = useState<AgentId>(DEFAULT_AGENT_ID);
+  const [chatId, setChatId] = useState(() => crypto.randomUUID());
+  const [isResetting, setIsResetting] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, sendMessage, setMessages, status, error, id } =
-    useChat<AppMessage>({ transport });
+  const { messages, sendMessage, setMessages, status, error, id, stop } =
+    useChat<AppMessage>({ transport, id: chatId });
 
   const isStreaming = status === "streaming" || status === "submitted";
+  const isBusy = isStreaming || isResetting;
 
   const handleSubmit = useCallback(
     async (text?: string) => {
       const message = text || input;
-      if (!message.trim() || isStreaming) return;
+      if (!message.trim() || isBusy) return;
       setInput("");
       // The server locks the agent to the chat on the first message; sending
       // it every turn is harmless and keeps follow-ups consistent.
       await sendMessage({ text: message.trim() }, { body: { agent: agentId } });
     },
-    [input, isStreaming, sendMessage, agentId],
+    [input, isBusy, sendMessage, agentId],
   );
 
-  const handleClear = useCallback(() => {
+  const handleClear = useCallback(async () => {
+    if (isResetting) return;
+    setIsResetting(true);
+    stop();
+
     // Drop the server-side harness session (and its sandbox) for this chat.
-    fetch(`/api/agent?id=${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    }).catch(() => {});
-    setMessages([]);
-    setInput("");
-    inputRef.current?.focus();
-  }, [id, setMessages]);
+    try {
+      await fetch(`/api/agent?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    } finally {
+      setMessages([]);
+      setChatId(crypto.randomUUID());
+      setInput("");
+      setIsResetting(false);
+      inputRef.current?.focus();
+    }
+  }, [id, isResetting, setMessages, stop]);
 
   const isEmpty = messages.length === 0;
 
@@ -447,7 +459,8 @@ export default function HarnessChatPage() {
           {/* Right: reset */}
           <button
             onClick={handleClear}
-            className="-mr-1.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            disabled={isResetting}
+            className="-mr-1.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             Start over
           </button>
@@ -479,6 +492,7 @@ export default function HarnessChatPage() {
                     <button
                       key={s.label}
                       onClick={() => handleSubmit(s.prompt)}
+                      disabled={isBusy}
                       className="group flex items-start gap-3 bg-card p-4 text-left transition-colors hover:bg-accent"
                     >
                       <Icon
@@ -553,10 +567,10 @@ export default function HarnessChatPage() {
           />
           <button
             onClick={() => handleSubmit()}
-            disabled={!input.trim() || isStreaming}
+            disabled={!input.trim() || isBusy}
             className="absolute right-2.5 bottom-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-25"
           >
-            {isStreaming ? (
+            {isBusy ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.25} />
