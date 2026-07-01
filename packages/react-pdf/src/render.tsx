@@ -153,7 +153,8 @@ export async function renderToBuffer(
   options?: RenderOptions,
 ): Promise<Uint8Array> {
   const document = buildDocument(spec, options);
-  return pdfRenderToBuffer(document as any);
+  const buffer = await pdfRenderToBuffer(document as any);
+  return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
 }
 
 /**
@@ -162,7 +163,7 @@ export async function renderToBuffer(
 export async function renderToStream(
   spec: Spec,
   options?: RenderOptions,
-): Promise<ReadableStream> {
+): Promise<NodeJS.ReadableStream> {
   const document = buildDocument(spec, options);
   return pdfRenderToStream(document as any);
 }

@@ -206,5 +206,6 @@ export async function renderToPng(
 
   const resvg = new Resvg(svg);
   const pngData = resvg.render();
-  return pngData.asPng();
+  const png = pngData.asPng();
+  return new Uint8Array(png.buffer, png.byteOffset, png.byteLength);
 }
