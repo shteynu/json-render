@@ -1,8 +1,27 @@
 # Changelog
 
-## 0.19.0
+## 0.19.1
 
 <!-- release:start -->
+### Bug Fixes
+
+- **zod 4.4+ compatibility** — `@json-render/core` and `@json-render/shadcn-svelte` listed zod in both `dependencies` and `peerDependencies`, which could give the library its own zod copy distinct from your app's. zod 4 embeds a version literal in its types, so the duplicate copies surfaced as `Type '4' is not assignable to type '3'` errors on `_zod.version.minor` and blocked upgrading to zod 4.4+. zod is now a peer-only dependency, so your app's zod is always the single copy (#297, #303)
+- **`visible` validation on zod 4.4+** — `catalog.validate()` accepted specs that omit an element's `visible` field on zod 4.3 but rejected them on zod 4.4+, where `z.any()` object keys became non-optional. `visible` is now explicitly optional so all zod 4.x versions agree (#287, #299)
+- **Dangling children autofix** — `autoFixSpec` now prunes `children` references to elements that don't exist in the spec, the dominant remaining first-attempt validation failure for AI-generated specs. The renderer already skipped missing children at runtime, so pruning renders identically while letting the spec validate; each removal is reported in `fixes` (#300)
+- **PDF and image render types** — Fixed `Buffer`/`Uint8Array` type errors in `@json-render/image`'s `renderToPng` and `@json-render/react-pdf`'s `renderToBuffer` under current `@types/node`, and corrected `renderToStream`'s declared return type to `NodeJS.ReadableStream`, which is what `@react-pdf/renderer` actually returns (#304)
+
+### Improvements
+
+- **Prompt rules for children** — The default prompt now states explicitly that every element must include a `children` array (`[]` for leaves), which models otherwise omitted on roughly a third of first attempts (#299)
+- **Harness agent chat example** — New `examples/harness-chat` demo running a coding agent (Claude Code, Codex, or Pi) in a Vercel Sandbox via the AI SDK `HarnessAgent` API, rendering its work reports as json-render generative UI instead of markdown (#302)
+
+### Contributors
+
+- @ctate
+<!-- release:end -->
+
+## 0.19.0
+
 ### New Features
 
 - **Custom directives API** — `@json-render/core` now supports custom directives via `defineDirective`, letting you declare new JSON shapes (like `$format`, `$math`) that resolve to computed values at render time. Directives compose naturally — nest `$format` over `$math` over `$state` and they resolve inside-out. All four renderers (React, Vue, Svelte, Solid) have built-in directive resolution (#279)
@@ -15,7 +34,6 @@
 ### Contributors
 
 - @ctate
-<!-- release:end -->
 
 ## 0.18.0
 
