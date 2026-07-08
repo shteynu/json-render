@@ -196,7 +196,7 @@ export interface ActionExecutionContext {
   /** Function to navigate */
   navigate?: (path: string) => void;
   /** Function to execute another action */
-  executeAction?: (name: string | ActionBinding) => Promise<void>;
+  executeAction?: (binding: ActionBinding) => Promise<void>;
 }
 
 /**

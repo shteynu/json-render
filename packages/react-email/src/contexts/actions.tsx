@@ -175,9 +175,7 @@ export function ActionProvider({
               setState: set,
               navigate,
               executeAction: async (binding) => {
-                const subBinding =
-                  typeof binding === "string" ? { action: binding } : binding;
-                await execute(subBinding);
+                await execute(binding);
               },
             });
           } finally {
@@ -198,9 +196,7 @@ export function ActionProvider({
           setState: set,
           navigate,
           executeAction: async (binding) => {
-            const subBinding =
-              typeof binding === "string" ? { action: binding } : binding;
-            await execute(subBinding);
+            await execute(binding);
           },
         });
       } finally {

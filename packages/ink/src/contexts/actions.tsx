@@ -281,9 +281,7 @@ export function ActionProvider({
           setState: set,
           navigate: navigateRef.current,
           executeAction: async (binding) => {
-            const subBinding =
-              typeof binding === "string" ? { action: binding } : binding;
-            await execute(subBinding);
+            await execute(binding);
           },
         });
       } finally {

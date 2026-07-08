@@ -288,9 +288,7 @@ export const ActionProvider = defineComponent({
               setState: set,
               navigate: props.navigate,
               executeAction: async (binding) => {
-                const subBinding =
-                  typeof binding === "string" ? { action: binding } : binding;
-                await execute(subBinding);
+                await execute(binding);
               },
             });
           } finally {
@@ -312,9 +310,7 @@ export const ActionProvider = defineComponent({
             setState: set,
             navigate: props.navigate,
             executeAction: async (binding) => {
-              const subBinding =
-                typeof binding === "string" ? { action: binding } : binding;
-              await execute(subBinding);
+              await execute(binding);
             },
           });
         } finally {
