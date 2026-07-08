@@ -180,6 +180,56 @@ describe("createActionContext", () => {
   );
 
   it(
+    "forwards params to a named onSuccess action (#301)",
+    (() => {
+      const toast = vi.fn().mockResolvedValue(undefined);
+      return component(
+        async () => {
+          const actionCtx = getActionContext();
+
+          await actionCtx.execute({
+            action: "save",
+            onSuccess: { action: "toast", params: { message: "Saved" } },
+          });
+
+          expect(toast).toHaveBeenCalledWith({ message: "Saved" });
+        },
+        {
+          handlers: {
+            save: vi.fn().mockResolvedValue(undefined),
+            toast,
+          },
+        },
+      );
+    })(),
+  );
+
+  it(
+    "forwards params to a named onError action (#301)",
+    (() => {
+      const toast = vi.fn().mockResolvedValue(undefined);
+      return component(
+        async () => {
+          const actionCtx = getActionContext();
+
+          await actionCtx.execute({
+            action: "save",
+            onError: { action: "toast", params: { message: "Failed" } },
+          });
+
+          expect(toast).toHaveBeenCalledWith({ message: "Failed" });
+        },
+        {
+          handlers: {
+            save: vi.fn().mockRejectedValue(new Error("boom")),
+            toast,
+          },
+        },
+      );
+    })(),
+  );
+
+  it(
     "warns when no handler registered",
     component(async () => {
       const actionCtx = getActionContext();

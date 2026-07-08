@@ -304,8 +304,9 @@
             handler,
             setState: stateCtx.set,
             navigate,
-            executeAction: async (name) => {
-              const subBinding: CoreActionBinding = { action: name };
+            executeAction: async (binding) => {
+              const subBinding: CoreActionBinding =
+                typeof binding === "string" ? { action: binding } : binding;
               await execute(subBinding);
             },
           });
@@ -322,8 +323,9 @@
         handler,
         setState: stateCtx.set,
         navigate,
-        executeAction: async (name) => {
-          const subBinding: CoreActionBinding = { action: name };
+        executeAction: async (binding) => {
+          const subBinding: CoreActionBinding =
+            typeof binding === "string" ? { action: binding } : binding;
           await execute(subBinding);
         },
       });
