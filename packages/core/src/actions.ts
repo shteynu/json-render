@@ -84,7 +84,10 @@ export const ActionOnSuccessSchema = z.union([
  */
 export const ActionOnErrorSchema = z.union([
   z.object({ set: z.record(z.string(), z.unknown()) }),
-  z.object({ action: z.string() }),
+  z.object({
+    action: z.string(),
+    params: z.record(z.string(), DynamicValueSchema).optional(),
+  }),
 ]);
 
 /**

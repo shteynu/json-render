@@ -4,7 +4,27 @@ import {
   executeAction,
   interpolateString,
   actionBinding,
+  ActionOnSuccessSchema,
+  ActionOnErrorSchema,
 } from "./actions";
+
+describe("onSuccess/onError schemas", () => {
+  it("keeps params on the onSuccess action form", () => {
+    const parsed = ActionOnSuccessSchema.parse({
+      action: "toast",
+      params: { message: "Saved" },
+    });
+    expect(parsed).toEqual({ action: "toast", params: { message: "Saved" } });
+  });
+
+  it("keeps params on the onError action form", () => {
+    const parsed = ActionOnErrorSchema.parse({
+      action: "toast",
+      params: { message: "Failed" },
+    });
+    expect(parsed).toEqual({ action: "toast", params: { message: "Failed" } });
+  });
+});
 
 describe("interpolateString", () => {
   it("interpolates ${path} expressions", () => {
