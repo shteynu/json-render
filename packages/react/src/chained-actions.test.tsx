@@ -195,4 +195,46 @@ describe("chained actions: live $state resolution (#141)", () => {
     expect(state.counter).toBe(42);
     expect(state.counterCopy).toBe(42);
   });
+
+  it("forwards params to a named onSuccess action (#301)", async () => {
+    let receivedParams: Record<string, unknown> | undefined;
+    const handlers = {
+      save: async () => {},
+      toast: async (params: Record<string, unknown>) => {
+        receivedParams = params;
+      },
+    };
+
+    const spec: Spec = {
+      root: "main",
+      elements: {
+        main: {
+          type: "Button",
+          props: { label: "Save" },
+          on: {
+            press: {
+              action: "save",
+              onSuccess: { action: "toast", params: { message: "Saved!" } },
+            },
+          },
+        },
+      },
+    };
+
+    function App() {
+      return (
+        <JSONUIProvider registry={registry} handlers={handlers}>
+          <Renderer spec={spec} registry={registry} />
+        </JSONUIProvider>
+      );
+    }
+
+    render(<App />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("btn"));
+    });
+
+    expect(receivedParams).toEqual({ message: "Saved!" });
+  });
 });

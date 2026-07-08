@@ -262,8 +262,9 @@ export function ActionProvider({
               handler,
               setState: set,
               navigate,
-              executeAction: async (name) => {
-                const subBinding: ActionBinding = { action: name };
+              executeAction: async (binding) => {
+                const subBinding =
+                  typeof binding === "string" ? { action: binding } : binding;
                 await execute(subBinding);
               },
             });
@@ -285,8 +286,9 @@ export function ActionProvider({
           handler,
           setState: set,
           navigate,
-          executeAction: async (name) => {
-            const subBinding: ActionBinding = { action: name };
+          executeAction: async (binding) => {
+            const subBinding =
+              typeof binding === "string" ? { action: binding } : binding;
             await execute(subBinding);
           },
         });

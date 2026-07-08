@@ -19,14 +19,14 @@ export interface ActionConfirm {
 export type ActionOnSuccess =
   | { navigate: string }
   | { set: Record<string, unknown> }
-  | { action: string };
+  | { action: string; params?: Record<string, DynamicValue> };
 
 /**
  * Action error handler
  */
 export type ActionOnError =
   | { set: Record<string, unknown> }
-  | { action: string };
+  | { action: string; params?: Record<string, DynamicValue> };
 
 /**
  * Action binding — maps an event to an action invocation.
@@ -73,7 +73,10 @@ export const ActionConfirmSchema = z.object({
 export const ActionOnSuccessSchema = z.union([
   z.object({ navigate: z.string() }),
   z.object({ set: z.record(z.string(), z.unknown()) }),
-  z.object({ action: z.string() }),
+  z.object({
+    action: z.string(),
+    params: z.record(z.string(), DynamicValueSchema).optional(),
+  }),
 ]);
 
 /**
@@ -190,7 +193,7 @@ export interface ActionExecutionContext {
   /** Function to navigate */
   navigate?: (path: string) => void;
   /** Function to execute another action */
-  executeAction?: (name: string) => Promise<void>;
+  executeAction?: (name: string | ActionBinding) => Promise<void>;
 }
 
 /**
@@ -213,7 +216,7 @@ export async function executeAction(
           setState(path, value);
         }
       } else if ("action" in action.onSuccess && executeAction) {
-        await executeAction(action.onSuccess.action);
+        await executeAction(action.onSuccess);
       }
     }
   } catch (error) {
@@ -229,7 +232,7 @@ export async function executeAction(
           setState(path, resolvedValue);
         }
       } else if ("action" in action.onError && executeAction) {
-        await executeAction(action.onError.action);
+        await executeAction(action.onError);
       }
     } else {
       throw error;

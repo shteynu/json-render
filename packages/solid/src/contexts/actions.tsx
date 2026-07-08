@@ -239,8 +239,9 @@ export function ActionProvider(props: ParentProps<ActionProviderProps>) {
               handler,
               setState: set,
               navigate: props.navigate,
-              executeAction: async (name: string) => {
-                const subBinding: ActionBinding = { action: name };
+              executeAction: async (binding) => {
+                const subBinding =
+                  typeof binding === "string" ? { action: binding } : binding;
                 await execute(subBinding);
               },
             });
@@ -261,8 +262,9 @@ export function ActionProvider(props: ParentProps<ActionProviderProps>) {
           handler,
           setState: set,
           navigate: props.navigate,
-          executeAction: async (name: string) => {
-            const subBinding: ActionBinding = { action: name };
+          executeAction: async (binding) => {
+            const subBinding =
+              typeof binding === "string" ? { action: binding } : binding;
             await execute(subBinding);
           },
         });

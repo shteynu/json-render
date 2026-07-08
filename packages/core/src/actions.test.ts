@@ -161,7 +161,27 @@ describe("executeAction", () => {
       executeAction: executeActionFn,
     });
 
-    expect(executeActionFn).toHaveBeenCalledWith("followUp");
+    expect(executeActionFn).toHaveBeenCalledWith({ action: "followUp" });
+  });
+
+  it("handles onSuccess with action and params", async () => {
+    const executeActionFn = vi.fn();
+
+    await executeAction({
+      action: {
+        action: "save",
+        params: {},
+        onSuccess: { action: "toast", params: { message: "Saved" } },
+      },
+      handler: vi.fn().mockResolvedValue(undefined),
+      setState: vi.fn(),
+      executeAction: executeActionFn,
+    });
+
+    expect(executeActionFn).toHaveBeenCalledWith({
+      action: "toast",
+      params: { message: "Saved" },
+    });
   });
 
   it("handles onError with set", async () => {
@@ -196,7 +216,28 @@ describe("executeAction", () => {
       executeAction: executeActionFn,
     });
 
-    expect(executeActionFn).toHaveBeenCalledWith("handleError");
+    expect(executeActionFn).toHaveBeenCalledWith({ action: "handleError" });
+  });
+
+  it("handles onError with action and params", async () => {
+    const executeActionFn = vi.fn();
+    const error = new Error("Failed");
+
+    await executeAction({
+      action: {
+        action: "save",
+        params: {},
+        onError: { action: "toast", params: { message: "Save failed" } },
+      },
+      handler: vi.fn().mockRejectedValue(error),
+      setState: vi.fn(),
+      executeAction: executeActionFn,
+    });
+
+    expect(executeActionFn).toHaveBeenCalledWith({
+      action: "toast",
+      params: { message: "Save failed" },
+    });
   });
 
   it("re-throws error when no onError handler", async () => {
