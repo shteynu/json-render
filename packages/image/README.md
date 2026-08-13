@@ -156,6 +156,8 @@ const png = await renderToPng(spec, { fonts });
 
 ## Server-Safe Import
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 Import schema and catalog definitions without pulling in React or Satori:
 
 ```typescript

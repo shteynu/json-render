@@ -148,6 +148,8 @@ Handled automatically by `ActionProvider`:
 
 ## Dynamic Props and Bindings
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` inside an enclosing repeat.
+
 Supported expression forms include:
 
 - `{"$state": "/path"}`

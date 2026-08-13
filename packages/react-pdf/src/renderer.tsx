@@ -17,6 +17,8 @@ import {
   resolveElementProps,
   resolveBindings,
   resolveActionParam,
+  resolveRepeatItemStatePath,
+  resolveRepeatStatePath,
   evaluateVisibility,
   getByPath,
   type PropResolutionContext,
@@ -256,8 +258,18 @@ function RepeatChildren({
   fallback?: ComponentRenderer;
 }) {
   const { state } = useStateStore();
+  const parentScope = useRepeatScope();
   const repeat = element.repeat!;
-  const statePath = repeat.statePath;
+  const statePath = resolveRepeatStatePath(
+    repeat.statePath,
+    parentScope?.basePath,
+  );
+  if (statePath === undefined) {
+    console.warn(
+      "[json-render/react-pdf] $item in repeat.statePath used outside of a repeat scope",
+    );
+    return null;
+  }
 
   const items = (getByPath(state, statePath) as unknown[] | undefined) ?? [];
 
@@ -276,7 +288,7 @@ function RepeatChildren({
             key={key}
             item={itemValue}
             index={index}
-            basePath={`${statePath}/${index}`}
+            basePath={resolveRepeatItemStatePath(statePath, index)}
           >
             {element.children?.map((childKey) => {
               const childElement = spec.elements[childKey];

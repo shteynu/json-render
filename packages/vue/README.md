@@ -488,6 +488,8 @@ const spec = {
 
 ## Differences from `@json-render/react`
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 | API | React | Vue | Note |
 |-----|-------|-----|------|
 | `useStateStore().state` | `StateModel` | `ShallowRef<StateModel>` | Vue reactivity; use `state.value` |

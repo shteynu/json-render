@@ -763,6 +763,9 @@ Note: state patches appear right after the elements that use them, so the UI fil
     'The element itself renders once (as the container), and its children are expanded once per array item. "statePath" is the state array path. "key" is an optional field name on each item for stable React keys.',
   );
   lines.push(
+    'For nested lists, an inner repeat can read an array from the enclosing item with { "statePath": { "$item": "field" } }. This form is valid only inside another repeat. Use an empty field to repeat over the enclosing item itself.',
+  );
+  lines.push(
     `Example: ${JSON.stringify({ type: comp1, props: comp1Props, repeat: { statePath: "/todos", key: "id" }, children: ["todo-item"] })}`,
   );
   lines.push(

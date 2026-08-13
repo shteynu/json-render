@@ -126,7 +126,7 @@ The `repeat` field on an element renders its children once per item in a state a
 }
 ```
 
-- `repeat.statePath` — JSON Pointer to the state array
+- `repeat.statePath`: root JSON Pointer to the state array, or `{ "$item": "field" }` for an array on the enclosing repeat item
 - `repeat.key` — field name on each item to use as a stable key for rendering
 
 Inside `todo-item`, `{ "$item": "title" }` reads the `title` field from whichever array item is currently being rendered. `{ "$index": true }` would return `0` for the first item, `1` for the second, and so on.

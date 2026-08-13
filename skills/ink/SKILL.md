@@ -171,6 +171,8 @@ Use the `repeat` field on a container element to render items from a state array
 
 Inside repeated children, use `{ "$item": "field" }` to read from the current item and `{ "$index": true }` for the current index.
 
+For nested lists, an inner repeat can use `{ "statePath": { "$item": "children" } }` to iterate an array on the enclosing item.
+
 ## Streaming
 
 Use `useUIStream` to progressively render specs from JSONL patch streams:

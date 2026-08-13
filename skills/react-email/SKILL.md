@@ -95,7 +95,7 @@ const html = await renderToHtml(spec, { registry });
 
 ## Visibility and State
 
-Supports `visible` conditions, `$state`, `$cond`, repeat (`repeat.statePath`), and the same expression syntax as `@json-render/react`. Use `state` in `RenderOptions` when rendering server-side so expressions resolve.
+Supports `visible` conditions, `$state`, `$cond`, repeat (`repeat.statePath`), nested repeat paths with `{ "$item": "field" }`, and the same expression syntax as `@json-render/react`. Use `state` in `RenderOptions` when rendering server-side so expressions resolve.
 
 ## Server-Safe Import
 

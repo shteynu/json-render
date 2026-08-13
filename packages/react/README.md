@@ -519,6 +519,8 @@ function App() {
 
 ## Key Exports
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 | Export | Purpose |
 |--------|---------|
 | `defineRegistry` | Create a type-safe component registry from a catalog |

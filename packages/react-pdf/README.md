@@ -154,6 +154,8 @@ All render functions accept an optional second argument with:
 - `state` - Initial state for `$state` / `$cond` dynamic prop resolution
 - `handlers` - Action handlers
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 ## External Store (Controlled Mode)
 
 For full control over state, pass a `StateStore` to `StateProvider`, `JSONUIProvider`, or `createRenderer`. When `store` is provided, `initialState` and `onStateChange` are ignored and the store is the single source of truth:

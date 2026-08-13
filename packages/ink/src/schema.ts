@@ -23,6 +23,8 @@ export const schema = defineSchema(
           children: s.array(s.string()),
           /** Visibility condition */
           visible: { ...s.any(), ...s.optional() },
+          /** Repeat children from a state array */
+          repeat: { ...s.any(), ...s.optional() },
         }),
       ),
     }),
@@ -76,7 +78,7 @@ export const schema = defineSchema(
       'CRITICAL: The "on" field goes on the ELEMENT object, NOT inside "props". Use on.press, on.change, on.submit etc. NEVER put action/actionParams inside props.',
       // State and data
       "When the user asks for a UI that displays data (e.g. logs, tasks, metrics), ALWAYS include a state field with realistic sample data. The state field is a top-level field on the spec (sibling of root/elements).",
-      'When building repeating content backed by a state array, use the "repeat" field on a container element. Example: { "type": "Box", "props": { "flexDirection": "column" }, "repeat": { "statePath": "/items", "key": "id" }, "children": ["item-row"] }. Inside repeated children, use { "$item": "field" } to read a field from the current item, and { "$index": true } for the current array index.',
+      'When building repeating content backed by a state array, use the "repeat" field on a container element. Example: { "type": "Box", "props": { "flexDirection": "column" }, "repeat": { "statePath": "/items", "key": "id" }, "children": ["item-row"] }. For a nested list stored on the enclosing item, use "repeat": { "statePath": { "$item": "children" }, "key": "id" }. The $item statePath form is valid only inside another repeat. Inside repeated children, use { "$item": "field" } to read from the current item and { "$index": true } for the current index.',
       // Terminal UI design
       "This UI renders in a terminal using Ink. Use Box for layout (flexDirection, padding, gap), Text for text content. Keep designs compact and readable in monospace.",
       "Terminal UIs have limited width (~80-120 columns). Prefer vertical layouts (flexDirection: column) for main structure. Use horizontal layouts (flexDirection: row) for inline elements like badges, key-value pairs, and table rows.",

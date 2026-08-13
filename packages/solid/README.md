@@ -227,6 +227,8 @@ await stream.send("Build me a dashboard");
 
 ## Differences from `@json-render/react`
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 Most APIs are intentionally aligned, but there are runtime behavior differences due to Solid:
 
 - Solid components run once, then update via signals.

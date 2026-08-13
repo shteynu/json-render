@@ -148,6 +148,8 @@ const chat = createChatUI({ endpoint: "/api/chat" });
 
 ## Documentation
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 Full API reference: [json-render.dev/docs/api/svelte](https://json-render.dev/docs/api/svelte).
 
 ## License

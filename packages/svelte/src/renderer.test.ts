@@ -191,4 +191,42 @@ describe("Renderer", () => {
     expect(texts).toHaveLength(1);
     expect(texts[0]?.textContent).toBe("I exist");
   });
+
+  it("renders nested repeats from the enclosing item", () => {
+    const spec: Spec = {
+      root: "groups",
+      state: {
+        groups: [
+          { subitems: [{ label: "a1" }, { label: "a2" }] },
+          { subitems: [{ label: "b1" }] },
+        ],
+      },
+      elements: {
+        groups: {
+          type: "Container",
+          props: {},
+          repeat: { statePath: "/groups" },
+          children: ["subitems"],
+        },
+        subitems: {
+          type: "Container",
+          props: {},
+          repeat: { statePath: { $item: "/subitems" } },
+          children: ["label"],
+        },
+        label: {
+          type: "Text",
+          props: { text: { $item: "label" } },
+          children: [],
+        },
+      },
+    };
+
+    const { container } = mountRenderer(spec);
+    expect(
+      Array.from(container.querySelectorAll(".test-text")).map(
+        (element) => element.textContent,
+      ),
+    ).toEqual(["a1", "a2", "b1"]);
+  });
 });

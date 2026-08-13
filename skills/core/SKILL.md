@@ -177,7 +177,7 @@ import { validateSpec, autoFixSpec } from "@json-render/core";
 
 const { valid, issues } = validateSpec(spec);
 // issues include: missing_child, invalid_visible (malformed conditions),
-// repeat_without_children, repeat_state_mismatch (statePath not an array in state)
+// repeat_without_children, repeat_item_outside_scope, repeat_state_mismatch
 
 const { spec: fixed, fixDetails } = autoFixSpec(spec);
 // fixDetails entries are { message, lossy }. Lossless fixes relocate

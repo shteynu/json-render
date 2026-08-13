@@ -26,6 +26,8 @@ import {
   resolveElementProps,
   resolveBindings,
   resolveActionParam,
+  resolveRepeatItemStatePath,
+  resolveRepeatStatePath,
   evaluateVisibility,
   getByPath,
   isDevtoolsActive,
@@ -427,10 +429,25 @@ interface RepeatChildrenProps {
 function RepeatChildren(props: RepeatChildrenProps) {
   const stateStore = useStateStore();
   const repeat = () => props.element.repeat!;
-  const statePath = () => repeat().statePath;
+  const parentScope = useRepeatScope();
+  const statePath = () => {
+    const resolved = resolveRepeatStatePath(
+      repeat().statePath,
+      parentScope?.basePath,
+    );
+    if (resolved === undefined) {
+      console.warn(
+        "[json-render/solid] $item in repeat.statePath used outside of a repeat scope",
+      );
+    }
+    return resolved;
+  };
 
   const items = () =>
-    (getByPath(stateStore.state, statePath()) as unknown[] | undefined) ?? [];
+    statePath() === undefined
+      ? []
+      : ((getByPath(stateStore.state, statePath()!) as unknown[] | undefined) ??
+        []);
 
   return (
     <For each={items()}>
@@ -446,7 +463,7 @@ function RepeatChildren(props: RepeatChildrenProps) {
           <RepeatScopeProvider
             item={itemValue}
             index={index()}
-            basePath={`${statePath()}/${index()}`}
+            basePath={resolveRepeatItemStatePath(statePath()!, index())}
           >
             <For each={props.element.children ?? []}>
               {(childKey) => {

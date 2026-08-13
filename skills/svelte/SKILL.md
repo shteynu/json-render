@@ -205,6 +205,8 @@ Other built-in actions: `pushState`, `removeState`, `push`, `pop`.
 
 ## Dynamic Props and Two-Way Binding
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` inside an enclosing repeat.
+
 Expression forms resolved before your component receives props:
 
 - `{"$state": "/state/key"}` - read from state

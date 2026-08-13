@@ -650,7 +650,7 @@ interface UIElement {
   children?: string[];          // Keys of child elements
   visible?: VisibilityCondition;
   on?: Record<string, ActionBinding | ActionBinding[]>;  // Event bindings
-  repeat?: { statePath: string; key?: string };           // Repeat for arrays
+  repeat?: { statePath: string | { $item: string }; key?: string }; // Repeat for arrays
 }
 ```
 

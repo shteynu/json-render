@@ -28,6 +28,8 @@ import {
   resolveElementProps,
   resolveBindings,
   resolveActionParam,
+  resolveRepeatItemStatePath,
+  resolveRepeatStatePath,
   evaluateVisibility,
   getByPath,
   createDirectiveRegistry,
@@ -487,11 +489,21 @@ const RepeatChildren = defineComponent({
   },
   setup(props) {
     const { state } = useStateStore();
+    const parentScope = useRepeatScope();
 
     return () => {
       const repeat = props.element.repeat;
       if (!repeat?.statePath) return null;
-      const statePath = repeat.statePath;
+      const statePath = resolveRepeatStatePath(
+        repeat.statePath,
+        parentScope?.basePath,
+      );
+      if (statePath === undefined) {
+        console.warn(
+          "[json-render/vue] $item in repeat.statePath used outside of a repeat scope",
+        );
+        return null;
+      }
       const raw = getByPath(state.value, statePath);
       const items = Array.isArray(raw) ? (raw as unknown[]) : [];
 
@@ -505,7 +517,12 @@ const RepeatChildren = defineComponent({
 
         return h(
           RepeatScopeProvider,
-          { key, item: itemValue, index, basePath: `${statePath}/${index}` },
+          {
+            key,
+            item: itemValue,
+            index,
+            basePath: resolveRepeatItemStatePath(statePath, index),
+          },
           {
             default: () =>
               props.element.children

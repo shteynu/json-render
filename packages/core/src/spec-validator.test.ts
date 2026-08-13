@@ -236,6 +236,203 @@ describe("repeat validation", () => {
     });
     expect(runtimeState.valid).toBe(true);
   });
+
+  it("accepts a nested repeat relative to the enclosing item", () => {
+    const result = validateSpec({
+      root: "groups",
+      state: {
+        groups: [{ subitems: [{ label: "a" }] }],
+      },
+      elements: {
+        groups: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/groups" },
+          children: ["subitems"],
+        },
+        subitems: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: { $item: "subitems" } },
+          children: ["label"],
+        },
+        label: { type: "Text", props: {}, children: [] },
+      },
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.issues).toHaveLength(0);
+  });
+
+  it("rejects a relative repeat outside repeat scope", () => {
+    const result = validateSpec({
+      root: "items",
+      state: { items: [{ label: "root" }] },
+      elements: {
+        items: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: { $item: "items" } },
+          children: ["label"],
+        },
+        label: { type: "Text", props: {}, children: [] },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(
+      result.issues.some((issue) => issue.code === "repeat_item_outside_scope"),
+    ).toBe(true);
+  });
+
+  it("accepts relative repeat structure when the outer sample array is empty", () => {
+    const result = validateSpec({
+      root: "groups",
+      state: { groups: [] },
+      elements: {
+        groups: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/groups" },
+          children: ["subitems"],
+        },
+        subitems: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: { $item: "subitems" } },
+          children: ["label"],
+        },
+        label: { type: "Text", props: {}, children: [] },
+      },
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects a nested relative repeat that does not resolve to an array", () => {
+    const result = validateSpec({
+      root: "groups",
+      state: { groups: [{ subitems: { label: "a" } }] },
+      elements: {
+        groups: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/groups" },
+          children: ["subitems"],
+        },
+        subitems: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: { $item: "/subitems" } },
+          children: ["label"],
+        },
+        label: { type: "Text", props: {}, children: [] },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(
+      result.issues.some((issue) => issue.code === "repeat_state_mismatch"),
+    ).toBe(true);
+  });
+
+  it("does not duplicate repeat issues for the same structural context", () => {
+    const result = validateSpec({
+      root: "root",
+      state: { items: [] },
+      elements: {
+        root: {
+          type: "Stack",
+          props: {},
+          children: ["left", "right"],
+        },
+        left: {
+          type: "Stack",
+          props: {},
+          children: ["shared"],
+        },
+        right: {
+          type: "Stack",
+          props: {},
+          children: ["shared"],
+        },
+        shared: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: { $item: "items" } },
+          children: ["label"],
+        },
+        label: { type: "Text", props: {}, children: [] },
+      },
+    });
+
+    expect(
+      result.issues.filter(
+        (issue) => issue.code === "repeat_item_outside_scope",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("validates a reused repeat separately inside and outside scope", () => {
+    const result = validateSpec({
+      root: "root",
+      state: { groups: [{ items: [] }] },
+      elements: {
+        root: {
+          type: "Stack",
+          props: {},
+          children: ["groups", "shared"],
+        },
+        groups: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/groups" },
+          children: ["shared"],
+        },
+        shared: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: { $item: "items" } },
+          children: ["label"],
+        },
+        label: { type: "Text", props: {}, children: [] },
+      },
+    });
+
+    expect(
+      result.issues.filter(
+        (issue) => issue.code === "repeat_item_outside_scope",
+      ),
+    ).toHaveLength(1);
+    expect(
+      result.issues.filter((issue) => issue.code === "repeat_state_mismatch"),
+    ).toHaveLength(0);
+  });
+
+  it("terminates repeat validation for cyclic child graphs", () => {
+    const result = validateSpec({
+      root: "groups",
+      state: { groups: [{ items: [] }] },
+      elements: {
+        groups: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: "/groups" },
+          children: ["items"],
+        },
+        items: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: { $item: "items" } },
+          children: ["groups"],
+        },
+      },
+    });
+
+    expect(
+      result.issues.filter((issue) => issue.code === "repeat_state_mismatch"),
+    ).toHaveLength(0);
+  });
 });
 
 describe("visible condition validation", () => {

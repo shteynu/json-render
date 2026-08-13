@@ -3,6 +3,8 @@ import satori, { type SatoriOptions } from "satori";
 import type { Spec, UIElement } from "@json-render/core";
 import {
   resolveElementProps,
+  resolveRepeatItemStatePath,
+  resolveRepeatStatePath,
   evaluateVisibility,
   getByPath,
   type PropResolutionContext,
@@ -60,21 +62,25 @@ function renderElement(
   if (!Component) return null;
 
   if (resolvedElement.repeat) {
+    const repeat = resolvedElement.repeat;
+    const statePath = resolveRepeatStatePath(repeat.statePath, repeatBasePath);
+    if (statePath === undefined) {
+      console.warn(
+        "[json-render/image] $item in repeat.statePath used outside of a repeat scope",
+      );
+      return null;
+    }
+
     const items =
-      (getByPath(stateModel, resolvedElement.repeat.statePath) as
-        | unknown[]
-        | undefined) ?? [];
+      (getByPath(stateModel, statePath) as unknown[] | undefined) ?? [];
 
     const fragments = items.map((item, index) => {
       const key =
-        resolvedElement.repeat!.key && typeof item === "object" && item !== null
-          ? String(
-              (item as Record<string, unknown>)[resolvedElement.repeat!.key!] ??
-                index,
-            )
+        repeat.key && typeof item === "object" && item !== null
+          ? String((item as Record<string, unknown>)[repeat.key!] ?? index)
           : String(index);
 
-      const childPath = `${resolvedElement.repeat!.statePath}/${index}`;
+      const childPath = resolveRepeatItemStatePath(statePath, index);
       const children = resolvedElement.children?.map((childKey) =>
         renderElement(
           childKey,

@@ -19,6 +19,7 @@ export const schema = defineSchema(
           props: s.propsOf("catalog.components"),
           children: s.array(s.string()),
           visible: { ...s.any(), ...s.optional() },
+          repeat: { ...s.any(), ...s.optional() },
         }),
       ),
     }),

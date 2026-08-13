@@ -377,6 +377,9 @@ export function yamlPrompt(
     'Inside repeated children, use { "$item": "field" } for item data and { "$index": true } for the array index.',
   );
   lines.push(
+    'For nested lists, an inner repeat can use statePath: { "$item": "field" } to read an array from the enclosing item. This form is valid only inside another repeat.',
+  );
+  lines.push(
     "ALWAYS use repeat for lists backed by state arrays. NEVER hardcode individual elements per item.",
   );
   lines.push(

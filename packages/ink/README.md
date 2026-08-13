@@ -110,6 +110,8 @@ const { spec, send, isStreaming } = useUIStream({ api: "/api/generate" });
 
 ## Key Exports
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 | Export | Purpose |
 |--------|---------|
 | `createRenderer` | Create an all-in-one renderer component from a catalog |

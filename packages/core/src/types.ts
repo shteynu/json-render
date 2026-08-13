@@ -50,6 +50,8 @@ export const DynamicBooleanSchema = z.union([
   z.object({ $state: z.string() }),
 ]);
 
+export type RepeatStatePath = string | { $item: string };
+
 /**
  * Base UI element structure for v2
  */
@@ -68,7 +70,7 @@ export interface UIElement<
   /** Event bindings — maps event names to action bindings */
   on?: Record<string, ActionBinding | ActionBinding[]>;
   /** Repeat children once per item in a state array */
-  repeat?: { statePath: string; key?: string };
+  repeat?: { statePath: RepeatStatePath; key?: string };
   /**
    * State watchers — maps JSON Pointer state paths to action bindings.
    * When the value at a watched path changes, the bound actions fire.
@@ -305,6 +307,40 @@ export function getByPath(obj: unknown, path: string): unknown {
   }
 
   return current;
+}
+
+export function resolveRepeatStatePath(
+  statePath: RepeatStatePath,
+  repeatBasePath?: string | null,
+): string | undefined {
+  if (typeof statePath === "string") {
+    return statePath;
+  }
+
+  if (repeatBasePath == null) {
+    return undefined;
+  }
+
+  if (statePath.$item === "" || statePath.$item === "/") {
+    return repeatBasePath;
+  }
+
+  return joinStatePath(repeatBasePath, statePath.$item);
+}
+
+export function resolveRepeatItemStatePath(
+  statePath: string,
+  index: number,
+): string {
+  return joinStatePath(statePath, String(index));
+}
+
+function joinStatePath(basePath: string, childPath: string): string {
+  const child = childPath.startsWith("/") ? childPath.slice(1) : childPath;
+  if (basePath === "" || basePath === "/") {
+    return `/${child}`;
+  }
+  return `${basePath}/${child}`;
 }
 
 /**

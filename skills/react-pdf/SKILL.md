@@ -126,6 +126,8 @@ const buffer = await renderToBuffer(spec, { registry });
 
 Pass a `StateStore` for full control over state:
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` inside an enclosing repeat.
+
 ```typescript
 import { createStateStore } from "@json-render/react-pdf";
 

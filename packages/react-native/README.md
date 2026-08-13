@@ -236,6 +236,8 @@ When `store` is provided, `initialState` and `onStateChange` are ignored. The st
 
 ## Hooks
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 | Hook | Purpose |
 |------|---------|
 | `useStateStore()` | Access state context (`state`, `get`, `set`, `update`) |

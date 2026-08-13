@@ -1,6 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import React from "react";
-import { Renderer } from "./renderer";
+import { render, screen } from "@testing-library/react";
+import type { Spec } from "@json-render/core";
+import {
+  JSONUIProvider,
+  Renderer,
+  type ComponentRenderProps,
+} from "./renderer";
 
 describe("Renderer", () => {
   it("renders null for null spec", () => {
@@ -39,5 +45,98 @@ describe("Renderer", () => {
       fallback: Fallback,
     });
     expect(element.props.fallback).toBe(Fallback);
+  });
+
+  it.each(["subitems", "/subitems"])(
+    "resolves nested repeat statePath %s from parent $item scope",
+    (itemPath) => {
+      function Group({ children }: ComponentRenderProps) {
+        return <div>{children}</div>;
+      }
+
+      function Text({ element }: ComponentRenderProps<{ text: unknown }>) {
+        return (
+          <span data-testid="item-text">{String(element.props.text)}</span>
+        );
+      }
+
+      const spec: Spec = {
+        root: "groups",
+        state: {
+          groups: [
+            { subitems: [{ label: "a1" }, { label: "a2" }] },
+            { subitems: [{ label: "b1" }] },
+          ],
+        },
+        elements: {
+          groups: {
+            type: "Group",
+            props: {},
+            repeat: { statePath: "/groups" },
+            children: ["subitems"],
+          },
+          subitems: {
+            type: "Group",
+            props: {},
+            repeat: { statePath: { $item: itemPath } },
+            children: ["label"],
+          },
+          label: {
+            type: "Text",
+            props: { text: { $item: "label" } },
+          },
+        },
+      };
+
+      render(
+        <JSONUIProvider registry={{ Group, Text }} initialState={spec.state}>
+          <Renderer spec={spec} registry={{ Group, Text }} />
+        </JSONUIProvider>,
+      );
+
+      expect(
+        screen.getAllByTestId("item-text").map((el) => el.textContent),
+      ).toEqual(["a1", "a2", "b1"]);
+    },
+  );
+
+  it("does not fall back to root state for $item outside repeat scope", () => {
+    function Group({ children }: ComponentRenderProps) {
+      return <div>{children}</div>;
+    }
+
+    function Text({ element }: ComponentRenderProps<{ text: unknown }>) {
+      return <span data-testid="item-text">{String(element.props.text)}</span>;
+    }
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const spec: Spec = {
+      root: "items",
+      state: { items: [{ label: "must-not-render" }] },
+      elements: {
+        items: {
+          type: "Group",
+          props: {},
+          repeat: { statePath: { $item: "items" } },
+          children: ["label"],
+        },
+        label: {
+          type: "Text",
+          props: { text: { $item: "label" } },
+        },
+      },
+    };
+
+    const { queryAllByTestId } = render(
+      <JSONUIProvider registry={{ Group, Text }} initialState={spec.state}>
+        <Renderer spec={spec} registry={{ Group, Text }} />
+      </JSONUIProvider>,
+    );
+
+    expect(queryAllByTestId("item-text")).toHaveLength(0);
+    expect(warn).toHaveBeenCalledWith(
+      "[json-render] $item in repeat.statePath used outside of a repeat scope",
+    );
+    warn.mockRestore();
   });
 });

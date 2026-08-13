@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   resolveDynamicValue,
   getByPath,
+  resolveRepeatStatePath,
+  resolveRepeatItemStatePath,
   setByPath,
   addByPath,
   removeByPath,
@@ -55,6 +57,41 @@ describe("getByPath", () => {
     const data = { user: null };
 
     expect(getByPath(data, "/user/name")).toBeUndefined();
+  });
+});
+
+describe("resolveRepeatStatePath", () => {
+  it("preserves string paths exactly", () => {
+    expect(resolveRepeatStatePath("/items")).toBe("/items");
+    expect(resolveRepeatStatePath("items")).toBe("items");
+  });
+
+  it("resolves $item paths against the enclosing item path", () => {
+    expect(resolveRepeatStatePath({ $item: "subitems" }, "/groups/0")).toBe(
+      "/groups/0/subitems",
+    );
+    expect(resolveRepeatStatePath({ $item: "/subitems" }, "/groups/0")).toBe(
+      "/groups/0/subitems",
+    );
+  });
+
+  it("resolves an empty $item path to the enclosing item", () => {
+    expect(resolveRepeatStatePath({ $item: "" }, "/groups/0")).toBe(
+      "/groups/0",
+    );
+    expect(resolveRepeatStatePath({ $item: "/" }, "/groups/0")).toBe(
+      "/groups/0",
+    );
+  });
+
+  it("does not resolve $item outside repeat scope", () => {
+    expect(resolveRepeatStatePath({ $item: "items" })).toBeUndefined();
+  });
+
+  it("builds item paths without duplicate root separators", () => {
+    expect(resolveRepeatItemStatePath("/items", 2)).toBe("/items/2");
+    expect(resolveRepeatItemStatePath("/", 2)).toBe("/2");
+    expect(resolveRepeatItemStatePath("items", 2)).toBe("items/2");
   });
 });
 

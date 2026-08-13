@@ -104,6 +104,8 @@ Note: `useStateStore().state` returns a `ShallowRef<StateModel>` — use `state.
 
 ## External Store (StateStore)
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` inside an enclosing repeat.
+
 Pass a `StateStore` to `StateProvider` to wire json-render to Pinia, VueUse, or any state management:
 
 ```typescript

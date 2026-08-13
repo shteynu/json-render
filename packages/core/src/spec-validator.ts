@@ -1,5 +1,9 @@
 import type { Spec, UIElement } from "./types";
-import { getByPath } from "./types";
+import {
+  getByPath,
+  resolveRepeatItemStatePath,
+  resolveRepeatStatePath,
+} from "./types";
 import { VisibilityConditionStrictSchema } from "./visibility";
 
 // =============================================================================
@@ -28,6 +32,7 @@ export interface SpecIssue {
     | "missing_child"
     | "invalid_visible"
     | "repeat_without_children"
+    | "repeat_item_outside_scope"
     | "repeat_state_mismatch"
     | "visible_in_props"
     | "orphaned_element"
@@ -138,17 +143,6 @@ export function validateSpec(
           code: "repeat_without_children",
         });
       }
-      if (spec.state !== undefined) {
-        const value = getByPath(spec.state, element.repeat.statePath);
-        if (!Array.isArray(value)) {
-          issues.push({
-            severity: "error",
-            message: `Element "${key}" repeats over "${element.repeat.statePath}" but state${value === undefined ? " has no value there" : ` has a ${typeof value} there`}. Repeat statePath must reference an array in state; add sample items to state at that path.`,
-            elementKey: key,
-            code: "repeat_state_mismatch",
-          });
-        }
-      }
     }
 
     // 3b. Malformed visible condition. Unrecognized shapes silently evaluate
@@ -204,6 +198,88 @@ export function validateSpec(
         elementKey: key,
         code: "watch_in_props",
       });
+    }
+  }
+
+  const repeatValidatedKeys = new Set<string>();
+  const repeatValidatedContexts = new Set<string>();
+  const validateRepeatPaths = (
+    key: string,
+    repeatBasePath: string | undefined,
+    sampleAvailable: boolean,
+    ancestors: Set<string>,
+  ) => {
+    if (ancestors.has(key)) return;
+    const element = spec.elements[key];
+    if (!element) return;
+    repeatValidatedKeys.add(key);
+    const contextKey = `${key}\u0000${repeatBasePath ?? ""}\u0000${sampleAvailable}`;
+    if (repeatValidatedContexts.has(contextKey)) return;
+    repeatValidatedContexts.add(contextKey);
+
+    let childRepeatBasePath = repeatBasePath;
+    let childSampleAvailable = sampleAvailable;
+
+    if (element.repeat !== undefined) {
+      const statePath = resolveRepeatStatePath(
+        element.repeat.statePath,
+        repeatBasePath,
+      );
+      const displayPath =
+        typeof element.repeat.statePath === "string"
+          ? element.repeat.statePath
+          : JSON.stringify(element.repeat.statePath);
+
+      if (statePath === undefined) {
+        issues.push({
+          severity: "error",
+          message: `Element "${key}" uses relative repeat statePath ${displayPath} outside a repeat scope.`,
+          elementKey: key,
+          code: "repeat_item_outside_scope",
+        });
+        childRepeatBasePath = undefined;
+        childSampleAvailable = false;
+      } else {
+        const canCheckSample =
+          spec.state !== undefined &&
+          (typeof element.repeat.statePath === "string" || sampleAvailable);
+        const value = canCheckSample
+          ? getByPath(spec.state, statePath)
+          : undefined;
+
+        if (canCheckSample && !Array.isArray(value)) {
+          issues.push({
+            severity: "error",
+            message: `Element "${key}" repeats over "${statePath}" but state${value === undefined ? " has no value there" : ` has a ${typeof value} there`}. Repeat statePath must reference an array in state; add sample items to state at that path.`,
+            elementKey: key,
+            code: "repeat_state_mismatch",
+          });
+        }
+
+        childRepeatBasePath = resolveRepeatItemStatePath(statePath, 0);
+        childSampleAvailable =
+          canCheckSample && Array.isArray(value) && value.length > 0;
+      }
+    }
+
+    const nextAncestors = new Set(ancestors);
+    nextAncestors.add(key);
+    for (const childKey of element.children ?? []) {
+      validateRepeatPaths(
+        childKey,
+        childRepeatBasePath,
+        childSampleAvailable,
+        nextAncestors,
+      );
+    }
+  };
+
+  if (spec.elements[spec.root]) {
+    validateRepeatPaths(spec.root, undefined, true, new Set());
+  }
+  for (const key of Object.keys(spec.elements)) {
+    if (!repeatValidatedKeys.has(key)) {
+      validateRepeatPaths(key, undefined, true, new Set());
     }
   }
 

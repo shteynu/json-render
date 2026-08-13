@@ -128,6 +128,8 @@ Both accept an optional second argument with:
 - `includeStandard` — Include built-in standard components (default: `true`)
 - `state` — Initial state for `$state` / `$cond` dynamic prop resolution
 
+Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
+
 ## Server-Safe Import
 
 Import schema and catalog definitions without pulling in React or `@react-email/components`:
