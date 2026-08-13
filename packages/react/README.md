@@ -67,9 +67,7 @@ export const { registry } = defineRegistry(catalog, {
       </div>
     ),
     Button: ({ props, emit }) => (
-      <button onClick={() => emit("press")}>
-        {props.label}
-      </button>
+      <button onClick={() => emit("press")}>{props.label}</button>
     ),
     Input: ({ props, bindings }) => {
       const [value, setValue] = useBoundProp(props.value, bindings?.value);
@@ -97,9 +95,11 @@ import { registry } from "./registry";
 function App({ spec }) {
   return (
     <StateProvider initialState={{ form: { name: "" } }}>
-      <ActionProvider handlers={{
-        submit: () => console.log("Submit"),
-      }}>
+      <ActionProvider
+        handlers={{
+          submit: () => console.log("Submit"),
+        }}
+      >
         <Renderer spec={spec} registry={registry} />
       </ActionProvider>
     </StateProvider>
@@ -113,18 +113,21 @@ The React renderer uses a flat element map format:
 
 ```typescript
 interface Spec {
-  root: string;                          // Key of the root element
-  elements: Record<string, UIElement>;   // Flat map of elements by key
-  state?: Record<string, unknown>;       // Optional initial state
+  root: string; // Key of the root element
+  elements: Record<string, UIElement>; // Flat map of elements by key
+  state?: Record<string, unknown>; // Optional initial state
 }
 
 interface UIElement {
-  type: string;                          // Component name from catalog
-  props: Record<string, unknown>;        // Component props
-  children?: string[];                   // Keys of child elements
-  visible?: VisibilityCondition;         // Visibility condition
+  type: string; // Component name from catalog
+  props: Record<string, unknown>; // Component props
+  children?: string[]; // Keys of child elements
+  slots?: Record<string, string[]>; // Named slots mapped to child keys
+  visible?: VisibilityCondition; // Visibility condition
 }
 ```
+
+The `slots` element field is a React renderer feature. Other renderer packages may only use catalog slot declarations for default children.
 
 Example spec:
 
@@ -163,11 +166,11 @@ Share data across components with JSON Pointer paths:
 ```tsx
 <StateProvider initialState={{ user: { name: "John" } }}>
   {children}
-</StateProvider>
+</StateProvider>;
 
 // In components:
 const { state, get, set } = useStateStore();
-const name = get("/user/name");  // "John"
+const name = get("/user/name"); // "John"
 set("/user/age", 25);
 ```
 
@@ -181,9 +184,7 @@ import { createStateStore, type StateStore } from "@json-render/react";
 // Option 1: Use the built-in store outside of React
 const store = createStateStore({ count: 0 });
 
-<StateProvider store={store}>
-  {children}
-</StateProvider>
+<StateProvider store={store}>{children}</StateProvider>;
 
 // Mutate from anywhere — React will re-render automatically:
 store.set("/count", 1);
@@ -191,8 +192,14 @@ store.set("/count", 1);
 // Option 2: Implement the StateStore interface with your own backend
 const zustandStore: StateStore = {
   get: (path) => getByPath(useStore.getState(), path),
-  set: (path, value) => useStore.setState(prev => { /* ... */ }),
-  update: (updates) => useStore.setState(prev => { /* ... */ }),
+  set: (path, value) =>
+    useStore.setState((prev) => {
+      /* ... */
+    }),
+  update: (updates) =>
+    useStore.setState((prev) => {
+      /* ... */
+    }),
   getSnapshot: () => useStore.getState(),
   subscribe: (listener) => useStore.subscribe(listener),
 };
@@ -237,9 +244,7 @@ Control element visibility based on data:
 Add field validation:
 
 ```tsx
-<ValidationProvider>
-  {children}
-</ValidationProvider>
+<ValidationProvider>{children}</ValidationProvider>;
 
 // Use validation hooks:
 const { errors, validate } = useFieldValidation("/form/email", {
@@ -252,17 +257,17 @@ const { errors, validate } = useFieldValidation("/form/email", {
 
 ## Hooks
 
-| Hook | Purpose |
-|------|---------|
-| `useStateStore()` | Access state context (`state`, `get`, `set`, `update`) |
-| `useStateValue(path)` | Get single value from state |
-| `useStateBinding(path)` | Two-way data binding (returns `[value, setValue]`) |
-| `useIsVisible(condition)` | Check if a visibility condition is met |
-| `useActions()` | Access action context |
-| `useAction(name)` | Get a single action dispatch function |
-| `useFieldValidation(path, config)` | Field validation state |
-| `useOptionalValidation()` | Non-throwing validation context (returns `null` if no provider) |
-| `useUIStream(options)` | Stream specs from an API endpoint |
+| Hook                               | Purpose                                                         |
+| ---------------------------------- | --------------------------------------------------------------- |
+| `useStateStore()`                  | Access state context (`state`, `get`, `set`, `update`)          |
+| `useStateValue(path)`              | Get single value from state                                     |
+| `useStateBinding(path)`            | Two-way data binding (returns `[value, setValue]`)              |
+| `useIsVisible(condition)`          | Check if a visibility condition is met                          |
+| `useActions()`                     | Access action context                                           |
+| `useAction(name)`                  | Get a single action dispatch function                           |
+| `useFieldValidation(path, config)` | Field validation state                                          |
+| `useOptionalValidation()`          | Non-throwing validation context (returns `null` if no provider) |
+| `useUIStream(options)`             | Stream specs from an API endpoint                               |
 
 ## Visibility Conditions
 
@@ -296,13 +301,13 @@ TypeScript helpers from `@json-render/core`:
 ```typescript
 import { visibility } from "@json-render/core";
 
-visibility.when("/path")       // { $state: "/path" }
-visibility.unless("/path")     // { $state: "/path", not: true }
-visibility.eq("/path", val)    // { $state: "/path", eq: val }
-visibility.neq("/path", val)   // { $state: "/path", neq: val }
-visibility.and(cond1, cond2)  // { $and: [cond1, cond2] }
-visibility.always             // true
-visibility.never              // false
+visibility.when("/path"); // { $state: "/path" }
+visibility.unless("/path"); // { $state: "/path", not: true }
+visibility.eq("/path", val); // { $state: "/path", eq: val }
+visibility.neq("/path", val); // { $state: "/path", neq: val }
+visibility.and(cond1, cond2); // { $and: [cond1, cond2] }
+visibility.always; // true
+visibility.never; // false
 ```
 
 ## Dynamic Prop Expressions
@@ -422,19 +427,32 @@ When using `defineRegistry`, components receive these props:
 
 ```typescript
 interface ComponentContext<P> {
-  props: P;                    // Typed props from the catalog (expressions resolved)
-  children?: React.ReactNode;  // Rendered children
-  emit: (event: string) => void;   // Emit a named event (always defined)
+  props: P; // Typed props from the catalog (expressions resolved)
+  children?: React.ReactNode; // Rendered children
+  slots?: Record<string, React.ReactNode>; // Rendered named slots
+  emit: (event: string) => void; // Emit a named event (always defined)
   on: (event: string) => EventHandle; // Get event handle with metadata
-  loading?: boolean;           // Whether the parent is loading
-  bindings?: Record<string, string>;  // State paths for $bindState/$bindItem expressions (e.g. bindings.value)
+  loading?: boolean; // Whether the parent is loading
+  bindings?: Record<string, string>; // State paths for $bindState/$bindItem expressions (e.g. bindings.value)
 }
 
 interface EventHandle {
-  emit: () => void;            // Fire the event
+  emit: () => void; // Fire the event
   shouldPreventDefault: boolean; // Whether any binding requested preventDefault
-  bound: boolean;              // Whether any handler is bound
+  bound: boolean; // Whether any handler is bound
 }
+```
+
+Use `children` for the catalog's `"default"` slot. Components with additional slots receive them by name:
+
+```tsx
+Layout: ({ children, slots }) => (
+  <div>
+    <header>{slots?.header}</header>
+    <main>{children}</main>
+    <footer>{slots?.footer}</footer>
+  </div>
+),
 ```
 
 Use `emit("press")` for simple event firing. Use `on("click")` when you need to check metadata like `shouldPreventDefault` or `bound`:
@@ -521,27 +539,27 @@ function App() {
 
 Nested lists can set `repeat.statePath` to `{ "$item": "field" }` to iterate an array on the enclosing repeat item.
 
-| Export | Purpose |
-|--------|---------|
-| `defineRegistry` | Create a type-safe component registry from a catalog |
-| `Renderer` | Render a spec using a registry |
-| `schema` | Element tree schema (includes built-in actions: `setState`, `pushState`, `removeState`, `validateForm`) |
-| `useStateStore` | Access state context |
-| `useStateValue` | Get single value from state |
-| `useBoundProp` | Two-way binding for `$bindState`/`$bindItem` expressions |
-| `useActions` | Access actions context |
-| `useAction` | Get a single action dispatch function |
-| `useUIStream` | Stream specs from an API endpoint |
-| `createStateStore` | Create a framework-agnostic in-memory `StateStore` |
+| Export             | Purpose                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------- |
+| `defineRegistry`   | Create a type-safe component registry from a catalog                                                    |
+| `Renderer`         | Render a spec using a registry                                                                          |
+| `schema`           | Element tree schema (includes built-in actions: `setState`, `pushState`, `removeState`, `validateForm`) |
+| `useStateStore`    | Access state context                                                                                    |
+| `useStateValue`    | Get single value from state                                                                             |
+| `useBoundProp`     | Two-way binding for `$bindState`/`$bindItem` expressions                                                |
+| `useActions`       | Access actions context                                                                                  |
+| `useAction`        | Get a single action dispatch function                                                                   |
+| `useUIStream`      | Stream specs from an API endpoint                                                                       |
+| `createStateStore` | Create a framework-agnostic in-memory `StateStore`                                                      |
 
 ### Types
 
-| Export | Purpose |
-|--------|---------|
-| `ComponentContext` | Typed component render function context (catalog-aware) |
+| Export               | Purpose                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| `ComponentContext`   | Typed component render function context (catalog-aware)     |
 | `BaseComponentProps` | Catalog-agnostic base type for reusable component libraries |
-| `EventHandle` | Event handle with `emit()`, `shouldPreventDefault`, `bound` |
-| `ComponentFn` | Component render function type |
-| `SetState` | State setter type |
-| `StateModel` | State model type |
-| `StateStore` | Interface for plugging in external state management |
+| `EventHandle`        | Event handle with `emit()`, `shouldPreventDefault`, `bound` |
+| `ComponentFn`        | Component render function type                              |
+| `SetState`           | State setter type                                           |
+| `StateModel`         | State model type                                            |
+| `StateStore`         | Interface for plugging in external state management         |

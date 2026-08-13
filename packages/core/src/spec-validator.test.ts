@@ -59,6 +59,28 @@ describe("validateSpec", () => {
     expect(result.issues.some((i) => i.code === "missing_child")).toBe(true);
   });
 
+  it("detects missing children in named slots", () => {
+    const spec: Spec = {
+      root: "root",
+      elements: {
+        root: {
+          type: "Layout",
+          props: {},
+          slots: { header: ["nonexistent"] },
+        },
+      },
+    };
+    const result = validateSpec(spec);
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "missing_child",
+        elementKey: "root",
+        message: expect.stringContaining('slot "header"'),
+      }),
+    );
+  });
+
   it("detects visible_in_props", () => {
     const spec: Spec = {
       root: "root",
@@ -140,6 +162,23 @@ describe("validateSpec", () => {
     const result = validateSpec(spec, { checkOrphans: true });
     expect(result.valid).toBe(true);
     expect(result.issues.some((i) => i.code === "orphaned_element")).toBe(true);
+  });
+
+  it("treats named slot children as reachable", () => {
+    const spec: Spec = {
+      root: "root",
+      elements: {
+        root: {
+          type: "Layout",
+          props: {},
+          slots: { header: ["heading"] },
+        },
+        heading: { type: "Heading", props: {} },
+      },
+    };
+    const result = validateSpec(spec, { checkOrphans: true });
+    expect(result.valid).toBe(true);
+    expect(result.issues).toHaveLength(0);
   });
 });
 
@@ -280,6 +319,34 @@ describe("repeat validation", () => {
     });
 
     expect(result.valid).toBe(false);
+    expect(
+      result.issues.some((issue) => issue.code === "repeat_item_outside_scope"),
+    ).toBe(true);
+  });
+
+  it("does not give named slots the repeat scope created by their element", () => {
+    const result = validateSpec({
+      root: "items",
+      state: { items: [{ nested: [] }] },
+      elements: {
+        items: {
+          type: "Layout",
+          props: {},
+          repeat: { statePath: "/items" },
+          children: ["body"],
+          slots: { header: ["nested"] },
+        },
+        body: { type: "Text", props: {}, children: [] },
+        nested: {
+          type: "Stack",
+          props: {},
+          repeat: { statePath: { $item: "nested" } },
+          children: ["label"],
+        },
+        label: { type: "Text", props: {}, children: [] },
+      },
+    });
+
     expect(
       result.issues.some((issue) => issue.code === "repeat_item_outside_scope"),
     ).toBe(true);
@@ -517,6 +584,28 @@ describe("autoFixSpec", () => {
     const { spec: fixed, fixes } = autoFixSpec(spec);
     expect(fixed.elements.root!.children).toEqual(["text"]);
     expect(fixes).toEqual([]);
+  });
+
+  it("prunes undefined children from named slots", () => {
+    const spec: Spec = {
+      root: "root",
+      elements: {
+        root: {
+          type: "Layout",
+          props: {},
+          slots: { header: ["heading", "ghost"] },
+        },
+        heading: { type: "Heading", props: {} },
+      },
+    };
+    const { spec: fixed, fixDetails } = autoFixSpec(spec);
+    expect(fixed.elements.root!.slots).toEqual({ header: ["heading"] });
+    expect(fixDetails).toContainEqual({
+      message:
+        'Removed reference to undefined element "ghost" from slot "header" of "root".',
+      lossy: true,
+    });
+    expect(validateSpec(fixed).valid).toBe(true);
   });
 
   it("does not prune a repeat container down to zero children", () => {

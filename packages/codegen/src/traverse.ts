@@ -37,6 +37,14 @@ export function traverseSpec(
         visit(childKey, depth + 1, element);
       }
     }
+
+    if (element.slots) {
+      for (const childKeys of Object.values(element.slots)) {
+        for (const childKey of childKeys) {
+          visit(childKey, depth + 1, element);
+        }
+      }
+    }
   }
 
   visit(rootKey, 0, null);

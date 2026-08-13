@@ -60,6 +60,7 @@ export interface EventHandle {
 export interface BaseComponentProps<P = Record<string, unknown>> {
   props: P;
   children?: ReactNode;
+  slots?: Record<string, ReactNode>;
   /** Simple event emitter (shorthand). Fires the event and returns void. */
   emit: (event: string) => void;
   /** Get an event handle with metadata. Use when you need shouldPreventDefault or bound checks. */

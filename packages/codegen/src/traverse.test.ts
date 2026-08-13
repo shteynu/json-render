@@ -43,6 +43,33 @@ describe("traverseSpec", () => {
     });
     expect(visited).toEqual([]);
   });
+
+  it("visits named slot children depth-first", () => {
+    const spec: Spec = {
+      root: "root",
+      elements: {
+        root: {
+          type: "Layout",
+          props: {},
+          children: ["main"],
+          slots: {
+            header: ["heading"],
+            footer: ["actions"],
+          },
+        },
+        main: { type: "Content", props: {} },
+        heading: { type: "Heading", props: {} },
+        actions: { type: "Actions", props: {} },
+      },
+    };
+
+    const visited: string[] = [];
+    traverseSpec(spec, (_element, key) => {
+      visited.push(key);
+    });
+
+    expect(visited).toEqual(["root", "main", "heading", "actions"]);
+  });
 });
 
 describe("collectUsedComponents", () => {

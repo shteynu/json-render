@@ -1,9 +1,9 @@
-import { pageMetadata } from "@/lib/page-metadata"
-export const metadata = pageMetadata("docs/registry")
+import { pageMetadata } from "@/lib/page-metadata";
+export const metadata = pageMetadata("docs/registry");
 
 # Registry
 
-A registry maps your [catalog](/docs/catalog) definitions to platform-specific implementations. The catalog defines *what* AI can generate — the registry provides the *how*.
+A registry maps your [catalog](/docs/catalog) definitions to platform-specific implementations. The catalog defines _what_ AI can generate; the registry provides the _how_.
 
 What a registry contains depends on the schema you use. Each package defines its own schema, which determines the shape of both the catalog and the registry.
 
@@ -19,8 +19,8 @@ What a registry contains depends on the schema you use. Each package defines its
 Use `defineRegistry` to create a type-safe registry from your catalog. Pass your components, actions, or both:
 
 ```tsx
-import { defineRegistry } from '@json-render/react';
-import { myCatalog } from './catalog';
+import { defineRegistry } from "@json-render/react";
+import { myCatalog } from "./catalog";
 
 export const { registry, handlers, executeAction } = defineRegistry(myCatalog, {
   components: {
@@ -33,16 +33,14 @@ export const { registry, handlers, executeAction } = defineRegistry(myCatalog, {
     ),
 
     Button: ({ props, emit }) => (
-      <button onClick={() => emit("press")}>
-        {props.label}
-      </button>
+      <button onClick={() => emit("press")}>{props.label}</button>
     ),
   },
 
   actions: {
     submit_form: async (params, setState) => {
-      const res = await fetch('/api/submit', {
-        method: 'POST',
+      const res = await fetch("/api/submit", {
+        method: "POST",
         body: JSON.stringify(params),
       });
       const result = await res.json();
@@ -69,22 +67,35 @@ Each component receives a `ComponentContext` object:
 
 ```typescript
 interface ComponentContext {
-  props: T;                                // Type-safe props from your catalog
-  children?: React.ReactNode;              // Rendered children (for slot components)
-  emit: (event: string) => void;           // Emit a named event (always defined)
-  on: (event: string) => EventHandle;      // Get event handle with metadata
-  loading?: boolean;                       // Whether the renderer is in a loading state
-  bindings?: Record<string, string>;       // State paths from $bindState/$bindItem expressions
+  props: T; // Type-safe props from your catalog
+  children?: React.ReactNode; // Rendered children (for slot components)
+  slots?: Record<string, React.ReactNode>; // Rendered named slots
+  emit: (event: string) => void; // Emit a named event (always defined)
+  on: (event: string) => EventHandle; // Get event handle with metadata
+  loading?: boolean; // Whether the renderer is in a loading state
+  bindings?: Record<string, string>; // State paths from $bindState/$bindItem expressions
 }
 
 interface EventHandle {
-  emit: () => void;              // Fire the event
+  emit: () => void; // Fire the event
   shouldPreventDefault: boolean; // Whether any binding requested preventDefault
-  bound: boolean;                // Whether any handler is bound
+  bound: boolean; // Whether any handler is bound
 }
 ```
 
 Props are automatically inferred from your catalog, so `props.title` is typed as `string` if your catalog defines it that way.
+
+For components with named slots, read the default content from `children` and other regions from `slots`:
+
+```tsx
+Layout: ({ children, slots }) => (
+  <div>
+    <header>{slots?.header}</header>
+    <main>{children}</main>
+    <footer>{slots?.footer}</footer>
+  </div>
+),
+```
 
 Use `emit("press")` for simple event firing. Use `on("click")` when you need to inspect event metadata:
 
@@ -128,27 +139,29 @@ TextInput: ({ props, bindings }) => {
 
 ### Action Handlers
 
-Instead of AI generating arbitrary code, it declares *intent* by name. Your application provides the implementation. This is a core guardrail.
+Instead of AI generating arbitrary code, it declares _intent_ by name. Your application provides the implementation. This is a core guardrail.
 
 Actions are declared in your [catalog](/docs/catalog). The `@json-render/react` schema supports an `actions` key where you define what operations AI can trigger:
 
 ```typescript
-import { defineCatalog } from '@json-render/core';
-import { schema } from '@json-render/react/schema';
-import { z } from 'zod';
+import { defineCatalog } from "@json-render/core";
+import { schema } from "@json-render/react/schema";
+import { z } from "zod";
 
 const catalog = defineCatalog(schema, {
-  components: { /* ... */ },
+  components: {
+    /* ... */
+  },
   actions: {
     submit_form: {
       params: z.object({
         formId: z.string(),
       }),
-      description: 'Submit a form',
+      description: "Submit a form",
     },
     export_data: {
       params: z.object({
-        format: z.enum(['csv', 'pdf', 'json']),
+        format: z.enum(["csv", "pdf", "json"]),
       }),
     },
     navigate: {
@@ -166,8 +179,8 @@ Action handlers receive `(params, setState, state)` and are defined inside `defi
 export const { handlers, executeAction } = defineRegistry(catalog, {
   actions: {
     submit_form: async (params, setState) => {
-      const response = await fetch('/api/submit', {
-        method: 'POST',
+      const response = await fetch("/api/submit", {
+        method: "POST",
         body: JSON.stringify({ formId: params.formId }),
       });
       const result = await response.json();
@@ -219,14 +232,14 @@ For read-only state access (e.g. displaying a value from state), use `$state` ex
 Wire everything together with providers and the `<Renderer />` component:
 
 ```tsx
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef } from "react";
 import {
   Renderer,
   StateProvider,
   VisibilityProvider,
   ActionProvider,
-} from '@json-render/react';
-import { registry, handlers } from './registry';
+} from "@json-render/react";
+import { registry, handlers } from "./registry";
 
 function App({ spec, state, setState }) {
   const stateRef = useRef(state);
@@ -235,7 +248,11 @@ function App({ spec, state, setState }) {
   setStateRef.current = setState;
 
   const actionHandlers = useMemo(
-    () => handlers(() => setStateRef.current, () => stateRef.current),
+    () =>
+      handlers(
+        () => setStateRef.current,
+        () => stateRef.current,
+      ),
     [],
   );
 
@@ -256,8 +273,8 @@ function App({ spec, state, setState }) {
 `@json-render/react-native` uses the same `defineRegistry` API. The only difference is that components return React Native elements instead of HTML:
 
 ```tsx
-import { defineRegistry } from '@json-render/react-native';
-import { View, Text, Pressable } from 'react-native';
+import { defineRegistry } from "@json-render/react-native";
+import { View, Text, Pressable } from "react-native";
 
 export const { registry } = defineRegistry(catalog, {
   components: {
@@ -284,14 +301,14 @@ See the [@json-render/react-native API reference](/docs/api/react-native) for th
 `@json-render/react-email` uses `defineRegistry` like React and React Native. Components render to React Email primitives (`@react-email/components`). Use `renderToHtml` or `renderToPlainText` for server-side email output:
 
 ```tsx
-import { defineRegistry } from '@json-render/react-email';
-import { renderToHtml } from '@json-render/react-email';
-import { Body, Container, Heading, Text } from '@react-email/components';
+import { defineRegistry } from "@json-render/react-email";
+import { renderToHtml } from "@json-render/react-email";
+import { Body, Container, Heading, Text } from "@react-email/components";
 
 export const { registry } = defineRegistry(catalog, {
   components: {
     Card: ({ props, children }) => (
-      <Container style={{ padding: 16, backgroundColor: '#fff' }}>
+      <Container style={{ padding: 16, backgroundColor: "#fff" }}>
         <Heading>{props.title}</Heading>
         {children}
       </Container>
@@ -309,10 +326,10 @@ See the [@json-render/react-email API reference](/docs/api/react-email) for the 
 `@json-render/remotion` takes a different approach. Instead of `defineRegistry`, it uses a plain component registry with built-in standard components for video production:
 
 ```tsx
-import { Renderer, standardComponents } from '@json-render/remotion';
+import { Renderer, standardComponents } from "@json-render/remotion";
 
 // Use the standard components directly
-<Renderer spec={timelineSpec} components={standardComponents} />
+<Renderer spec={timelineSpec} components={standardComponents} />;
 
 // Or extend with your own
 const components = {

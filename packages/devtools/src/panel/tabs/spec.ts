@@ -223,7 +223,8 @@ function mountSpecTab(root: HTMLElement, ctx: PanelContext): TabInstance {
         return;
       }
       const el = spec.elements[current];
-      const hasChildren = !!el?.children?.length;
+      const childKeys = getChildKeys(el);
+      const hasChildren = childKeys.length > 0;
       if (!hasChildren) return;
       if (!expanded.has(current)) {
         expanded.add(current);
@@ -232,7 +233,7 @@ function mountSpecTab(root: HTMLElement, ctx: PanelContext): TabInstance {
         scrollSelectedIntoView();
       } else {
         // Already expanded → step into the first child.
-        moveSelection(el.children![0]);
+        moveSelection(childKeys[0]);
       }
       return;
     }
@@ -240,7 +241,7 @@ function mountSpecTab(root: HTMLElement, ctx: PanelContext): TabInstance {
     if (key === "ArrowLeft") {
       if (!current) return;
       const el = spec.elements[current];
-      const hasChildren = !!el?.children?.length;
+      const hasChildren = getChildKeys(el).length > 0;
       if (hasChildren && expanded.has(current)) {
         expanded.delete(current);
         render();
@@ -258,7 +259,7 @@ function mountSpecTab(root: HTMLElement, ctx: PanelContext): TabInstance {
       return;
     }
     const el = spec.elements[current];
-    if (el?.children?.length) {
+    if (getChildKeys(el).length > 0) {
       toggleExpanded(current);
       scrollSelectedIntoView();
     }
@@ -510,9 +511,10 @@ function collectVisibleKeys(spec: Spec, expanded: Set<string>): string[] {
   function walk(key: string) {
     list.push(key);
     const el = spec.elements[key];
-    if (!el?.children || el.children.length === 0) return;
+    const childKeys = getChildKeys(el);
+    if (childKeys.length === 0) return;
     if (!expanded.has(key)) return;
-    for (const child of el.children) walk(child);
+    for (const child of childKeys) walk(child);
   }
   walk(spec.root);
   return list;
@@ -520,9 +522,17 @@ function collectVisibleKeys(spec: Spec, expanded: Set<string>): string[] {
 
 function findParent(spec: Spec, key: string): string | null {
   for (const [parentKey, el] of Object.entries(spec.elements)) {
-    if (el.children?.includes(key)) return parentKey;
+    if (getChildKeys(el).includes(key)) return parentKey;
   }
   return null;
+}
+
+function getChildKeys(element: UIElement | undefined): string[] {
+  if (!element) return [];
+  return [
+    ...(element.children ?? []),
+    ...Object.values(element.slots ?? {}).flat(),
+  ];
 }
 
 interface IssueIndex {
@@ -554,8 +564,7 @@ function findPath(spec: Spec, key: string): string[] {
       return true;
     }
     const el = spec.elements[current];
-    if (!el?.children) return false;
-    for (const child of el.children) {
+    for (const child of getChildKeys(el)) {
       if (walk(child)) {
         path.push(current);
         return true;
@@ -592,7 +601,8 @@ function renderNode(
     );
   }
 
-  const hasChildren = Array.isArray(el.children) && el.children.length > 0;
+  const childKeys = getChildKeys(el);
+  const hasChildren = childKeys.length > 0;
   const isExpanded = hasChildren && expanded.has(key);
   const isSelected = selected === key;
   const elementIssues = issues.byKey.get(key) ?? [];
@@ -657,7 +667,7 @@ function renderNode(
   const container = h("div", null, row);
 
   if (isExpanded && hasChildren) {
-    for (const childKey of el.children!) {
+    for (const childKey of childKeys) {
       const childNode = renderNode(
         spec,
         childKey,
@@ -718,7 +728,7 @@ function renderDetail(
   }
 
   const elIssues = issues.byKey.get(key) ?? [];
-  const children = el.children?.length ?? 0;
+  const children = getChildKeys(el).length;
 
   replaceChildren(
     container,

@@ -65,6 +65,7 @@ export interface UIElement<
   props: P;
   /** Child element keys (flat structure) */
   children?: string[];
+  slots?: Record<string, string[]>;
   /** Visibility condition */
   visible?: VisibilityCondition;
   /** Event bindings — maps event names to action bindings */
@@ -685,6 +686,7 @@ interface NestedNode {
   type: string;
   props: Record<string, unknown>;
   children?: NestedNode[];
+  slots?: Record<string, NestedNode[]>;
   /** Any other top-level fields (visible, on, repeat, etc.) */
   [key: string]: unknown;
 }
@@ -727,7 +729,13 @@ export function nestedToFlat(nested: Record<string, unknown>): Spec {
 
   function walk(node: Record<string, unknown>): string {
     const key = `el-${counter++}`;
-    const { type, props, children: rawChildren, ...rest } = node as NestedNode;
+    const {
+      type,
+      props,
+      children: rawChildren,
+      slots: rawSlots,
+      ...rest
+    } = node as NestedNode;
 
     // Recursively flatten children
     const childKeys: string[] = [];
@@ -739,12 +747,25 @@ export function nestedToFlat(nested: Record<string, unknown>): Spec {
       }
     }
 
+    const slots: Record<string, string[]> = {};
+    if (rawSlots && typeof rawSlots === "object") {
+      for (const [slotName, slotChildren] of Object.entries(rawSlots)) {
+        if (!Array.isArray(slotChildren)) continue;
+        slots[slotName] = slotChildren.flatMap((child) =>
+          child && typeof child === "object" && "type" in child
+            ? [walk(child as Record<string, unknown>)]
+            : [],
+        );
+      }
+    }
+
     // Build the flat element, preserving extra fields (visible, on, repeat, etc.)
     // but excluding `state` which is hoisted to spec-level.
     const element: UIElement = {
       type: type ?? "unknown",
       props: (props as Record<string, unknown>) ?? {},
       children: childKeys,
+      ...(Object.keys(slots).length > 0 ? { slots } : {}),
     };
 
     // Copy extra fields (visible, on, repeat) but not state

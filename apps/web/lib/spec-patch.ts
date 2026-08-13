@@ -35,6 +35,10 @@ export function setSpecValue(
         type: typeof el.type === "string" ? el.type : "",
         props: el.props != null && typeof el.props === "object" ? el.props : {},
         children: Array.isArray(el.children) ? el.children : [],
+        slots:
+          el.slots != null && typeof el.slots === "object"
+            ? el.slots
+            : undefined,
       } as Spec["elements"][string];
     } else {
       const element = newSpec.elements[elementKey];

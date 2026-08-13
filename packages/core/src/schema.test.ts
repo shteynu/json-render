@@ -14,6 +14,7 @@ const testSchema = defineSchema((s) => ({
         type: s.ref("catalog.components"),
         props: s.propsOf("catalog.components"),
         children: s.array(s.string()),
+        slots: { ...s.record(s.array(s.string())), ...s.optional() },
         visible: { ...s.any(), ...s.optional() },
       }),
     ),
@@ -175,7 +176,7 @@ describe("catalog.prompt", () => {
             users: z.array(z.object({ name: z.string(), age: z.number() })),
           }),
           description: "A card container",
-          slots: ["default"],
+          slots: ["default", "header"],
         },
       },
       actions: {},
@@ -187,6 +188,8 @@ describe("catalog.prompt", () => {
     expect(prompt).toContain("title: string");
     expect(prompt).toContain("names: Array<string>");
     expect(prompt).toContain("users: Array<{ name: string, age: number }>");
+    expect(prompt).toContain("[accepts children; slots: header]");
+    expect(prompt).not.toContain("slots: default");
   });
 
   it("formats z.literal() as quoted value", () => {

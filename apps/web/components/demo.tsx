@@ -195,6 +195,15 @@ function specToNested(spec: Spec): Record<string, unknown> {
       node.children = el.children.map(resolve);
     }
 
+    if (el.slots && Object.keys(el.slots).length > 0) {
+      node.slots = Object.fromEntries(
+        Object.entries(el.slots).map(([slotName, childKeys]) => [
+          slotName,
+          childKeys.map(resolve),
+        ]),
+      );
+    }
+
     return node;
   }
 
@@ -393,21 +402,45 @@ export function Demo({
 
       const propsStr = serializeProps(propsObj);
       const hasChildren = element.children && element.children.length > 0;
+      const hasSlots = element.slots && Object.keys(element.slots).length > 0;
 
-      if (!hasChildren) {
+      if (!hasChildren && !hasSlots) {
         return propsStr
           ? `${spaces}<${componentName} ${propsStr} />`
           : `${spaces}<${componentName} />`;
       }
 
       const lines: string[] = [];
-      lines.push(
-        propsStr
-          ? `${spaces}<${componentName} ${propsStr}>`
-          : `${spaces}<${componentName}>`,
-      );
+      if (hasSlots) {
+        lines.push(`${spaces}<${componentName}`);
+        if (propsStr) {
+          lines.push(`${spaces}  ${propsStr}`);
+        }
+        for (const [slotName, childKeys] of Object.entries(element.slots!)) {
+          const slotChildren = childKeys
+            .map((childKey) => generateJSX(childKey, indent + 2))
+            .filter(Boolean);
+          if (slotChildren.length === 0) continue;
+          lines.push(`${spaces}  ${slotName}={`);
+          if (slotChildren.length > 1) {
+            lines.push(`${spaces}    <>`);
+          }
+          lines.push(...slotChildren);
+          if (slotChildren.length > 1) {
+            lines.push(`${spaces}    </>`);
+          }
+          lines.push(`${spaces}  }`);
+        }
+        lines.push(`${spaces}>`);
+      } else {
+        lines.push(
+          propsStr
+            ? `${spaces}<${componentName} ${propsStr}>`
+            : `${spaces}<${componentName}>`,
+        );
+      }
 
-      for (const childKey of element.children!) {
+      for (const childKey of element.children ?? []) {
         lines.push(generateJSX(childKey, indent + 1));
       }
 

@@ -339,17 +339,18 @@ setSpec({ ...applySpecPatch(spec, patch) });
 
 ### nestedToFlat
 
-Convert a nested element tree (with inline children) into the flat `Spec` format:
+Convert a nested element tree (with inline children and named slots) into the flat `Spec` format:
 
 ```typescript
 import { nestedToFlat } from '@json-render/core';
 
 const flat = nestedToFlat({
-  type: "Card",
-  props: { title: "Hello" },
-  children: [
-    { type: "Text", props: { content: "World" }, children: [] }
-  ],
+  type: "Layout",
+  props: {},
+  children: [{ type: "Text", props: { content: "Main" }, children: [] }],
+  slots: {
+    header: [{ type: "Heading", props: { text: "Header" }, children: [] }],
+  },
 });
 // { root: "el-0", elements: { "el-0": ..., "el-1": ... } }
 ```
@@ -648,6 +649,7 @@ interface UIElement {
   type: string;
   props: Record<string, unknown>;
   children?: string[];          // Keys of child elements
+  slots?: Record<string, string[]>; // Named slots mapped to child keys
   visible?: VisibilityCondition;
   on?: Record<string, ActionBinding | ActionBinding[]>;  // Event bindings
   repeat?: { statePath: string | { $item: string }; key?: string }; // Repeat for arrays
@@ -666,7 +668,7 @@ interface Spec {
 }
 ```
 
-Elements are stored as a flat map with string keys. The tree structure is built by following the `children` arrays.
+Elements are stored as a flat map with string keys. The tree structure is built by following `children` and named `slots` references.
 
 ### ActionBinding
 

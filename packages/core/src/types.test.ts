@@ -826,6 +826,27 @@ describe("nestedToFlat", () => {
     expect(spec.elements["el-2"]!.children).toEqual([]);
   });
 
+  it("converts nested named slots to flat element references", () => {
+    const spec = nestedToFlat({
+      type: "Layout",
+      props: {},
+      children: [{ type: "Text", props: { content: "Main" } }],
+      slots: {
+        header: [{ type: "Heading", props: { text: "Header" } }],
+        footer: [{ type: "Button", props: { label: "Continue" } }],
+      },
+    });
+
+    expect(Object.keys(spec.elements)).toHaveLength(4);
+    expect(spec.elements["el-0"]!.children).toEqual(["el-1"]);
+    expect(spec.elements["el-0"]!.slots).toEqual({
+      header: ["el-2"],
+      footer: ["el-3"],
+    });
+    expect(spec.elements["el-2"]!.type).toBe("Heading");
+    expect(spec.elements["el-3"]!.type).toBe("Button");
+  });
+
   it("hoists state from root node", () => {
     const spec = nestedToFlat({
       type: "Card",

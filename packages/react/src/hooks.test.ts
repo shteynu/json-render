@@ -311,6 +311,31 @@ describe("buildSpecFromParts", () => {
     expect(childEl!.props.content).toBe("Child");
   });
 
+  it("preserves named slots in nested spec parts", () => {
+    const spec = buildSpecFromParts([
+      {
+        type: "data-spec",
+        data: {
+          type: "nested",
+          spec: {
+            type: "Layout",
+            props: {},
+            slots: {
+              header: [
+                { type: "Heading", props: { text: "Header" }, children: [] },
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    expect(spec).not.toBeNull();
+    const root = spec!.elements[spec!.root]!;
+    expect(root.slots?.header).toHaveLength(1);
+    expect(spec!.elements[root.slots!.header![0]!]!.type).toBe("Heading");
+  });
+
   it("handles mixed patch + flat + nested parts in sequence", () => {
     const parts = [
       // Start with a patch

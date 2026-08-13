@@ -1,12 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import type { Spec } from "@json-render/core";
+import { defineCatalog, type Spec } from "@json-render/core";
+import { z } from "zod";
 import {
+  defineRegistry,
   JSONUIProvider,
   Renderer,
   type ComponentRenderProps,
 } from "./renderer";
+import { schema } from "./schema";
 
 describe("Renderer", () => {
   it("renders null for null spec", () => {
@@ -45,6 +48,61 @@ describe("Renderer", () => {
       fallback: Fallback,
     });
     expect(element.props.fallback).toBe(Fallback);
+  });
+
+  it("renders named slots through defineRegistry", () => {
+    const catalog = defineCatalog(schema, {
+      components: {
+        Layout: {
+          props: z.object({}),
+          slots: ["default", "header", "footer"],
+        },
+        Text: {
+          props: z.object({ text: z.string() }),
+          slots: [],
+        },
+      },
+      actions: {},
+    });
+    const { registry } = defineRegistry(catalog, {
+      components: {
+        Layout: ({ children, slots }) => (
+          <section>
+            <header data-testid="header-slot">{slots?.header}</header>
+            <main data-testid="default-slot">{children}</main>
+            <footer data-testid="footer-slot">{slots?.footer}</footer>
+          </section>
+        ),
+        Text: ({ props }) => <span>{props.text}</span>,
+      },
+    });
+    const spec: Spec = {
+      root: "layout",
+      elements: {
+        layout: {
+          type: "Layout",
+          props: {},
+          children: ["main"],
+          slots: {
+            header: ["header"],
+            footer: ["footer"],
+          },
+        },
+        header: { type: "Text", props: { text: "Header" } },
+        main: { type: "Text", props: { text: "Main" } },
+        footer: { type: "Text", props: { text: "Footer" } },
+      },
+    };
+
+    render(
+      <JSONUIProvider registry={registry}>
+        <Renderer spec={spec} registry={registry} />
+      </JSONUIProvider>,
+    );
+
+    expect(screen.getByTestId("header-slot").textContent).toBe("Header");
+    expect(screen.getByTestId("default-slot").textContent).toBe("Main");
+    expect(screen.getByTestId("footer-slot").textContent).toBe("Footer");
   });
 
   it.each(["subitems", "/subitems"])(

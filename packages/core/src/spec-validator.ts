@@ -131,6 +131,20 @@ export function validateSpec(
         }
       }
     }
+    if (element.slots) {
+      for (const [slotName, childKeys] of Object.entries(element.slots)) {
+        for (const childKey of childKeys) {
+          if (!spec.elements[childKey]) {
+            issues.push({
+              severity: "error",
+              message: `Element "${key}" references child "${childKey}" in slot "${slotName}" which does not exist in the elements map.`,
+              elementKey: key,
+              code: "missing_child",
+            });
+          }
+        }
+      }
+    }
 
     // 3b. Repeat containers that can never render anything. Both shapes pass
     // schema validation but produce silently empty regions at runtime.
@@ -272,6 +286,16 @@ export function validateSpec(
         nextAncestors,
       );
     }
+    for (const childKeys of Object.values(element.slots ?? {})) {
+      for (const childKey of childKeys) {
+        validateRepeatPaths(
+          childKey,
+          repeatBasePath,
+          sampleAvailable,
+          nextAncestors,
+        );
+      }
+    }
   };
 
   if (spec.elements[spec.root]) {
@@ -294,6 +318,15 @@ export function validateSpec(
         for (const childKey of el.children) {
           if (spec.elements[childKey]) {
             walk(childKey);
+          }
+        }
+      }
+      if (el?.slots) {
+        for (const childKeys of Object.values(el.slots)) {
+          for (const childKey of childKeys) {
+            if (spec.elements[childKey]) {
+              walk(childKey);
+            }
           }
         }
       }
@@ -452,6 +485,32 @@ export function autoFixSpec(
         }
       }
       fixedElements[key] = { ...element, children: present };
+    }
+
+  if (applyLossy)
+    for (const [key, element] of Object.entries(fixedElements)) {
+      if (!element.slots) continue;
+      let changed = false;
+      const slots = Object.fromEntries(
+        Object.entries(element.slots).map(([slotName, childKeys]) => {
+          const present = childKeys.filter((child) => child in fixedElements);
+          if (present.length !== childKeys.length) {
+            changed = true;
+            for (const child of childKeys) {
+              if (!(child in fixedElements)) {
+                fixes.push(
+                  `Removed reference to undefined element "${child}" from slot "${slotName}" of "${key}".`,
+                  true,
+                );
+              }
+            }
+          }
+          return [slotName, present];
+        }),
+      );
+      if (changed) {
+        fixedElements[key] = { ...element, slots };
+      }
     }
 
   return {

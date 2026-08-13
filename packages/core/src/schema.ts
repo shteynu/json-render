@@ -660,6 +660,21 @@ function generatePrompt<TDef extends SchemaDefinition, TCatalog>(
   const allComponents = (catalog.data as Record<string, unknown>).components as
     | Record<string, CatalogComponentDef>
     | undefined;
+  const specDefinition = catalog.schema.definition.spec;
+  const specShape =
+    specDefinition.kind === "object"
+      ? (specDefinition.inner as Record<string, SchemaType>)
+      : undefined;
+  const elementsDefinition = specShape?.elements;
+  const elementDefinition =
+    elementsDefinition?.kind === "record"
+      ? (elementsDefinition.inner as SchemaType)
+      : undefined;
+  const elementShape =
+    elementDefinition?.kind === "object"
+      ? (elementDefinition.inner as Record<string, SchemaType>)
+      : undefined;
+  const supportsNamedSlots = elementShape?.slots !== undefined;
   const cn = catalog.componentNames;
   const comp1 = cn[0] || "Component";
   const comp2 = cn.length > 1 ? cn[1]! : comp1;
@@ -812,14 +827,28 @@ Note: state patches appear right after the elements that use them, so the UI fil
 
     for (const [name, def] of Object.entries(components)) {
       const propsStr = def.props ? formatZodType(def.props) : "{}";
-      const hasChildren = def.slots && def.slots.length > 0;
-      const childrenStr = hasChildren ? " [accepts children]" : "";
+      const slotNames = def.slots ?? [];
+      const namedSlotNames = slotNames.filter((slot) => slot !== "default");
+      const acceptsChildren = slotNames.includes("default");
+      const slotsStr = supportsNamedSlots
+        ? [
+            acceptsChildren ? "accepts children" : "",
+            namedSlotNames.length > 0
+              ? `slots: ${namedSlotNames.join(", ")}`
+              : "",
+          ]
+            .filter(Boolean)
+            .join("; ")
+        : slotNames.length > 0
+          ? "accepts children"
+          : "";
+      const slotsSuffix = slotsStr ? ` [${slotsStr}]` : "";
       const eventsStr =
         def.events && def.events.length > 0
           ? ` [events: ${def.events.join(", ")}]`
           : "";
       const descStr = def.description ? ` - ${def.description}` : "";
-      lines.push(`- ${name}: ${propsStr}${descStr}${childrenStr}${eventsStr}`);
+      lines.push(`- ${name}: ${propsStr}${descStr}${slotsSuffix}${eventsStr}`);
     }
     lines.push("");
   }

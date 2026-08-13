@@ -1,5 +1,5 @@
-import { pageMetadata } from "@/lib/page-metadata"
-export const metadata = pageMetadata("docs/specs")
+import { pageMetadata } from "@/lib/page-metadata";
+export const metadata = pageMetadata("docs/specs");
 
 # Specs
 
@@ -60,7 +60,10 @@ A more complex spec with multiple nested elements:
     },
     "avatar-1": {
       "type": "Avatar",
-      "props": { "src": { "$state": "/user/avatar" }, "alt": { "$state": "/user/name" } },
+      "props": {
+        "src": { "$state": "/user/avatar" },
+        "alt": { "$state": "/user/name" }
+      },
       "children": []
     },
     "stack-1": {
@@ -102,7 +105,10 @@ A high-level spec using semantic blocks for page layouts:
     },
     "header": {
       "type": "Header",
-      "props": { "logo": "/logo.svg", "navItems": ["Products", "Pricing", "Docs"] },
+      "props": {
+        "logo": "/logo.svg",
+        "navItems": ["Products", "Pricing", "Docs"]
+      },
       "children": []
     },
     "hero": {
@@ -122,22 +128,37 @@ A high-level spec using semantic blocks for page layouts:
     },
     "feature-1": {
       "type": "Feature",
-      "props": { "icon": "zap", "title": "Fast", "description": "Render UIs in milliseconds" },
+      "props": {
+        "icon": "zap",
+        "title": "Fast",
+        "description": "Render UIs in milliseconds"
+      },
       "children": []
     },
     "feature-2": {
       "type": "Feature",
-      "props": { "icon": "shield", "title": "Secure", "description": "Validate all specs against your catalog" },
+      "props": {
+        "icon": "shield",
+        "title": "Secure",
+        "description": "Validate all specs against your catalog"
+      },
       "children": []
     },
     "feature-3": {
       "type": "Feature",
-      "props": { "icon": "sparkles", "title": "AI-Ready", "description": "Generate prompts from your catalog" },
+      "props": {
+        "icon": "sparkles",
+        "title": "AI-Ready",
+        "description": "Generate prompts from your catalog"
+      },
       "children": []
     },
     "footer": {
       "type": "Footer",
-      "props": { "copyright": "2025 Acme Inc", "links": ["Privacy", "Terms", "Contact"] },
+      "props": {
+        "copyright": "2025 Acme Inc",
+        "links": ["Privacy", "Terms", "Contact"]
+      },
       "children": []
     }
   }
@@ -174,13 +195,18 @@ Each element in the map has a consistent shape:
 {
   "type": "ComponentName",
   "props": { "label": "Hello" },
-  "children": ["child-1", "child-2"]
+  "children": ["child-1", "child-2"],
+  "slots": {
+    "header": ["heading-1"],
+    "footer": ["actions-1"]
+  }
 }
 ```
 
 - `type` — Component type from your catalog
 - `props` — Component properties
 - `children` — Array of child element keys
+- `slots`: Optional map of named slots to child element keys. Use `children` for the default slot. Named slot rendering is currently supported by `@json-render/react`.
 
 ### Dynamic Data
 
@@ -225,12 +251,12 @@ Control when elements appear using the `visible` property:
 Use `validateSpec` from `@json-render/core` to check a spec for structural issues:
 
 ```typescript
-import { validateSpec } from '@json-render/core';
+import { validateSpec } from "@json-render/core";
 
 const result = validateSpec(spec);
 
 if (!result.valid) {
-  console.error('Invalid spec:', result.issues);
+  console.error("Invalid spec:", result.issues);
 }
 ```
 
@@ -239,8 +265,12 @@ if (!result.valid) {
 With `@json-render/react`, wrap the `Renderer` in providers to supply state and visibility:
 
 ```tsx
-import { Renderer, StateProvider, VisibilityProvider } from '@json-render/react';
-import { registry } from './registry';
+import {
+  Renderer,
+  StateProvider,
+  VisibilityProvider,
+} from "@json-render/react";
+import { registry } from "./registry";
 
 function MyApp({ spec, initialState }) {
   return (
@@ -260,20 +290,14 @@ See the [@json-render/react API reference](/docs/api/react) for full provider an
 With `@json-render/react`, use the `useUIStream` hook to stream specs incrementally:
 
 ```tsx
-import { useUIStream } from '@json-render/react';
+import { useUIStream } from "@json-render/react";
 
 function GenerativeUI() {
   const { spec, isStreaming } = useUIStream({
-    api: '/api/generate',
+    api: "/api/generate",
   });
 
-  return (
-    <Renderer
-      spec={spec}
-      registry={registry}
-      loading={isStreaming}
-    />
-  );
+  return <Renderer spec={spec} registry={registry} loading={isStreaming} />;
 }
 ```
 
