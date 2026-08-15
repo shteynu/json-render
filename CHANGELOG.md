@@ -1,8 +1,39 @@
 # Changelog
 
-## 0.19.0
+## 0.20.0
 
 <!-- release:start -->
+
+### New Features
+
+- **Named slots for React:** Components can declare named slots such as `header` and `footer`, while `children` remains the default slot. Slots are preserved through validation, streaming, nested conversion, code export, playground views, and Devtools navigation (#320). Built from the original contribution by @wotnak in #105
+- **Nested repeats:** `repeat.statePath` now accepts item-relative paths such as `{ "$item": "employees" }`, enabling nested data rendering across React, React Native, React Email, React PDF, Image, Ink, Solid, Svelte, and Vue (#319). Built from the original contribution by @tmchow in #256
+- **Harness chat example:** Added a complete Next.js example using the AI SDK 7 harness adapter, agent delegation, sandbox transport, and json-render components (#302)
+
+### Bug Fixes
+
+- **Chained action params:** Named `onSuccess` and `onError` actions now receive their configured `params` across core and all renderer bridges (#307)
+- **Consistent optional visibility:** Element `visible` fields now remain optional across Zod 4 versions, while prompts explicitly require `children` arrays for every element (#299)
+- **Spec validation and autofix:** Dangling child references are pruned, malformed visibility conditions are reported, and repeated items can be filtered safely (#300)
+
+### Improvements
+
+- **Release toolchain hardening:** The workspace now requires Node.js 24 and pnpm 11, enforces package engine checks, and applies a minimum package release age (#293)
+
+### Breaking Changes
+
+- Custom renderer bridges that implement the core `executeAction` callback must now accept an `ActionBinding` instead of a bare action name. This exposes chained action params to custom integrations at compile time (#307)
+
+### Contributors
+
+- @ctate
+- @Railly
+- @tmchow
+- @wotnak
+<!-- release:end -->
+
+## 0.19.0
+
 ### New Features
 
 - **Custom directives API** — `@json-render/core` now supports custom directives via `defineDirective`, letting you declare new JSON shapes (like `$format`, `$math`) that resolve to computed values at render time. Directives compose naturally — nest `$format` over `$math` over `$state` and they resolve inside-out. All four renderers (React, Vue, Svelte, Solid) have built-in directive resolution (#279)
@@ -15,7 +46,6 @@
 ### Contributors
 
 - @ctate
-<!-- release:end -->
 
 ## 0.18.0
 

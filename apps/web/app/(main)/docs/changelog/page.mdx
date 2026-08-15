@@ -5,6 +5,72 @@ export const metadata = pageMetadata("docs/changelog")
 
 Notable changes and updates to json-render.
 
+## v0.20.0
+
+August 15, 2026
+
+### New: Named Slots for React
+
+React components can now declare named slots such as `header` and `footer`, while `children` remains the default slot. Named slots are preserved through validation, streaming, nested conversion, code export, playground views, and Devtools navigation.
+
+This work builds on the original named slots contribution by @wotnak.
+
+```tsx
+const catalog = defineCatalog(schema, {
+  components: {
+    Layout: {
+      props: z.object({}),
+      slots: ["default", "header", "footer"],
+    },
+  },
+});
+
+const { registry } = defineRegistry(catalog, {
+  components: {
+    Layout: ({ children, slots }) => (
+      <section>
+        <header>{slots?.header}</header>
+        <main>{children}</main>
+        <footer>{slots?.footer}</footer>
+      </section>
+    ),
+  },
+});
+```
+
+### New: Nested Repeats
+
+`repeat.statePath` now accepts item-relative paths such as `{ "$item": "employees" }`. Nested data can be rendered across React, React Native, React Email, React PDF, Image, Ink, Solid, Svelte, and Vue.
+
+This work builds on the original nested repeats contribution by @tmchow.
+
+```json
+{
+  "type": "Table",
+  "repeat": { "statePath": { "$item": "employees" }, "key": "id" },
+  "children": ["employee-row"],
+  "props": {}
+}
+```
+
+### New: Harness Chat Example
+
+Added a complete Next.js example using the AI SDK 7 harness adapter, agent delegation, sandbox transport, and json-render components.
+
+### Fixed: Chained Action Params
+
+Named `onSuccess` and `onError` actions now receive their configured `params` across core and all renderer bridges. Custom renderer bridges must now accept an `ActionBinding` in the core `executeAction` callback instead of a bare action name.
+
+### Improved: Spec Validation and Compatibility
+
+Element visibility remains optional across Zod 4 versions. Autofix now prunes dangling child references, validation reports malformed visibility conditions, and repeated items can be filtered safely.
+
+### Improved: Release Toolchain
+
+The workspace now requires Node.js 24 and pnpm 11, enforces package engine checks, and applies a minimum package release age.
+
+---
+
 ## v0.19.0
 
 May 6, 2026
