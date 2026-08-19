@@ -274,6 +274,60 @@ describe("streaming render stability", () => {
     expect(view.container.textContent).toBe("bar");
   });
 
+  it("recovers when props arrive after the element type", () => {
+    const parts: DataPart[] = [
+      {
+        type: "data-spec",
+        data: {
+          type: "patch",
+          patch: { op: "add", path: "/root", value: "value" },
+        },
+      },
+      {
+        type: "data-spec",
+        data: {
+          type: "patch",
+          patch: {
+            op: "add",
+            path: "/elements/value",
+            value: { type: "Value" },
+          },
+        },
+      },
+    ];
+    const registry: ComponentRegistry = {
+      Value: ({ element }) => (
+        <span>{String(element.props.label ?? "waiting")}</span>
+      ),
+    };
+    const incomplete = buildSpecFromParts(parts);
+    const view = render(
+      <JSONUIProvider registry={registry}>
+        <Renderer spec={incomplete} registry={registry} />
+      </JSONUIProvider>,
+    );
+    expect(view.container.textContent).toBe("waiting");
+
+    parts.push({
+      type: "data-spec",
+      data: {
+        type: "patch",
+        patch: {
+          op: "add",
+          path: "/elements/value/props",
+          value: { label: "ready" },
+        },
+      },
+    });
+    const complete = buildSpecFromParts(parts);
+    view.rerender(
+      <JSONUIProvider registry={registry}>
+        <Renderer spec={complete} registry={registry} />
+      </JSONUIProvider>,
+    );
+    expect(view.container.textContent).toBe("ready");
+  });
+
   it("keeps repeated event callbacks bound to the current item", async () => {
     let updateItem: (() => void) | undefined;
     const received: unknown[] = [];

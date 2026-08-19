@@ -93,6 +93,7 @@ const registryMetadata = new WeakMap<
   ComponentRegistry,
   Record<string, { slots?: string[] }>
 >();
+const EMPTY_ELEMENT_PROPS: Record<string, unknown> = {};
 
 /**
  * Props for the Renderer component
@@ -293,7 +294,7 @@ function useElementSignatures(spec: Spec | null): Record<string, number> {
 
       const own = JSON.stringify([
         frame.element,
-        Object.keys(frame.element.props),
+        Object.keys(frame.element.props ?? {}),
       ]);
       const childVersions = JSON.stringify(frame.childVersions);
       const prior = previous[frame.key];
@@ -566,7 +567,9 @@ function ReactiveElementRenderer({
   }
 
   // Resolve $bindState/$bindItem expressions → bindings map (prop name → state path)
-  const rawProps = element.props as Record<string, unknown>;
+  const rawProps =
+    (element.props as Record<string, unknown> | undefined) ??
+    EMPTY_ELEMENT_PROPS;
   const elementBindings = stabilizeRecord(
     resolveBindings(rawProps, fullCtx),
     stableBindingsRef,
