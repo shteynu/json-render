@@ -50,6 +50,7 @@ export interface ValidationContextValue {
 }
 
 const ValidationContext = createContext<ValidationContextValue | null>(null);
+const EMPTY_VALIDATION_FUNCTIONS: Record<string, ValidationFunction> = {};
 
 /**
  * Props for ValidationProvider
@@ -127,7 +128,7 @@ function validationConfigEqual(
  * Provider for validation
  */
 export function ValidationProvider({
-  customFunctions = {},
+  customFunctions = EMPTY_VALIDATION_FUNCTIONS,
   children,
 }: ValidationProviderProps) {
   const { state, getSnapshot } = useStateStore();

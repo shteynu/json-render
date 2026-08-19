@@ -115,6 +115,7 @@ export interface RendererProps {
 
 interface ElementErrorBoundaryProps {
   elementType: string;
+  resetKey: number | undefined;
   children: ReactNode;
 }
 
@@ -141,6 +142,12 @@ class ElementErrorBoundary extends React.Component<
       error,
       info.componentStack,
     );
+  }
+
+  componentDidUpdate(previous: ElementErrorBoundaryProps) {
+    if (this.state.hasError && previous.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false });
+    }
   }
 
   render() {
@@ -186,7 +193,177 @@ interface ElementRendererProps {
   registry: ComponentRegistry;
   loading?: boolean;
   fallback?: ComponentRenderer;
+  signatures: Record<string, number>;
 }
+
+function stabilizeRecord<T extends Record<string, unknown> | undefined>(
+  value: T,
+  ref: React.MutableRefObject<T>,
+): T {
+  const previous = ref.current;
+  if (previous === value) return previous;
+  if (previous && value) {
+    const keys = Object.keys(value);
+    if (
+      keys.length === Object.keys(previous).length &&
+      keys.every(
+        (key) =>
+          Object.prototype.hasOwnProperty.call(previous, key) &&
+          previous[key] === value[key],
+      )
+    ) {
+      return previous;
+    }
+  }
+  ref.current = value;
+  return value;
+}
+
+interface ElementSignatureEntry {
+  own: string;
+  children: string;
+  version: number;
+}
+
+interface ElementSignatureFrame {
+  key: string;
+  element: UIElement;
+  children: string[];
+  childIndex: number;
+  childVersions: Array<[string, number]>;
+}
+
+function useElementSignatures(spec: Spec | null): Record<string, number> {
+  const entriesRef = useRef<Record<string, ElementSignatureEntry>>({});
+  const versionRef = useRef(0);
+  if (!spec) return {};
+
+  const previous = entriesRef.current;
+  const next: Record<string, ElementSignatureEntry> = {};
+  const signatures: Record<string, number> = {};
+  const visiting = new Set<string>();
+
+  for (const key of Object.keys(spec.elements)) {
+    if (signatures[key] !== undefined) continue;
+    const element = spec.elements[key];
+    if (!element) continue;
+    visiting.add(key);
+    const stack: ElementSignatureFrame[] = [
+      {
+        key,
+        element,
+        children: [
+          ...(element.children ?? []),
+          ...Object.values(element.slots ?? {}).flat(),
+        ],
+        childIndex: 0,
+        childVersions: [],
+      },
+    ];
+
+    while (stack.length > 0) {
+      const frame = stack[stack.length - 1]!;
+      const childKey = frame.children[frame.childIndex];
+      if (childKey !== undefined) {
+        const childVersion = signatures[childKey];
+        if (childVersion !== undefined) {
+          frame.childVersions.push([childKey, childVersion]);
+          frame.childIndex += 1;
+          continue;
+        }
+        const childElement = spec.elements[childKey];
+        if (!childElement || visiting.has(childKey)) {
+          frame.childVersions.push([childKey, -1]);
+          frame.childIndex += 1;
+          continue;
+        }
+        visiting.add(childKey);
+        stack.push({
+          key: childKey,
+          element: childElement,
+          children: [
+            ...(childElement.children ?? []),
+            ...Object.values(childElement.slots ?? {}).flat(),
+          ],
+          childIndex: 0,
+          childVersions: [],
+        });
+        continue;
+      }
+
+      const own = JSON.stringify([
+        frame.element,
+        Object.keys(frame.element.props),
+      ]);
+      const childVersions = JSON.stringify(frame.childVersions);
+      const prior = previous[frame.key];
+      const version =
+        prior?.own === own && prior.children === childVersions
+          ? prior.version
+          : ++versionRef.current;
+      visiting.delete(frame.key);
+      next[frame.key] = { own, children: childVersions, version };
+      signatures[frame.key] = version;
+      stack.pop();
+    }
+  }
+  entriesRef.current = next;
+  return signatures;
+}
+
+interface CatalogComponentBoundaryProps {
+  Component: ComponentRenderer;
+  signature: number | undefined;
+  execute: ReturnType<typeof useActions>["execute"];
+  actionContext: ReturnType<typeof useRepeatScope>;
+  functions: Record<string, ComputedFunction>;
+  directives: DirectiveRegistry | undefined;
+  element: UIElement;
+  slots?: Record<string, ReactNode>;
+  emit: (event: string) => void;
+  on: (event: string) => EventHandle;
+  bindings?: Record<string, string>;
+  loading?: boolean;
+  children?: ReactNode;
+}
+
+const CatalogComponentBoundary = React.memo(
+  function CatalogComponentBoundary({
+    Component,
+    element,
+    slots,
+    emit,
+    on,
+    bindings,
+    loading,
+    children,
+  }: CatalogComponentBoundaryProps) {
+    return (
+      <Component
+        element={element}
+        slots={slots}
+        emit={emit}
+        on={on}
+        bindings={bindings}
+        loading={loading}
+      >
+        {children}
+      </Component>
+    );
+  },
+  (previous, next) =>
+    previous.Component === next.Component &&
+    previous.signature === next.signature &&
+    previous.execute === next.execute &&
+    previous.actionContext?.item === next.actionContext?.item &&
+    previous.actionContext?.index === next.actionContext?.index &&
+    previous.actionContext?.basePath === next.actionContext?.basePath &&
+    previous.functions === next.functions &&
+    previous.directives === next.directives &&
+    previous.element.props === next.element.props &&
+    previous.bindings === next.bindings &&
+    previous.loading === next.loading,
+);
 
 /**
  * Subscribe to whether any devtools is mounted so the renderer can add a
@@ -204,13 +381,14 @@ function useDevtoolsActive(): boolean {
  * Element renderer component.
  * Memoized to prevent re-rendering all repeat children when state changes.
  */
-const ElementRenderer = React.memo(function ElementRenderer({
+function ReactiveElementRenderer({
   element,
   elementKey,
   spec,
   registry,
   loading,
   fallback,
+  signatures,
 }: ElementRendererProps) {
   const devtoolsActive = useDevtoolsActive();
   const repeatScope = useRepeatScope();
@@ -311,6 +489,10 @@ const ElementRenderer = React.memo(function ElementRenderer({
   const watchConfig = element.watch;
   const prevWatchValues = useRef<Record<string, unknown> | null>(null);
   const stableWatchRef = useRef<Record<string, unknown> | undefined>(undefined);
+  const stableBindingsRef = useRef<Record<string, string> | undefined>(
+    undefined,
+  );
+  const stableResolvedPropsRef = useRef<Record<string, unknown>>({});
 
   const watchedValues = useMemo(() => {
     if (!watchConfig) return undefined;
@@ -385,10 +567,16 @@ const ElementRenderer = React.memo(function ElementRenderer({
 
   // Resolve $bindState/$bindItem expressions → bindings map (prop name → state path)
   const rawProps = element.props as Record<string, unknown>;
-  const elementBindings = resolveBindings(rawProps, fullCtx);
+  const elementBindings = stabilizeRecord(
+    resolveBindings(rawProps, fullCtx),
+    stableBindingsRef,
+  );
 
   // Resolve dynamic prop expressions ($state, $item, $index, $bindState, $bindItem, $cond/$then/$else)
-  const resolvedProps = resolveElementProps(rawProps, fullCtx);
+  const resolvedProps = stabilizeRecord(
+    resolveElementProps(rawProps, fullCtx),
+    stableResolvedPropsRef,
+  );
 
   const resolvedElement =
     resolvedProps !== element.props
@@ -442,6 +630,7 @@ const ElementRenderer = React.memo(function ElementRenderer({
           registry={registry}
           loading={loading}
           fallback={fallback}
+          signatures={signatures}
         />
       );
     });
@@ -454,6 +643,7 @@ const ElementRenderer = React.memo(function ElementRenderer({
       loading={loading}
       fallback={fallback}
       itemFilter={repeatItemFilter}
+      signatures={signatures}
     />
   ) : resolvedElement.children ? (
     renderChildKeys(resolvedElement.children)
@@ -469,7 +659,13 @@ const ElementRenderer = React.memo(function ElementRenderer({
     : undefined;
 
   const rendered = (
-    <Component
+    <CatalogComponentBoundary
+      Component={Component}
+      signature={signatures[elementKey ?? ""]}
+      execute={execute}
+      actionContext={repeatScope}
+      functions={functions}
+      directives={directives}
       element={resolvedElement}
       slots={slots}
       emit={emit}
@@ -478,7 +674,7 @@ const ElementRenderer = React.memo(function ElementRenderer({
       loading={loading}
     >
       {children}
-    </Component>
+    </CatalogComponentBoundary>
   );
 
   // When devtools is mounted, wrap each element in a transparent span so the
@@ -494,11 +690,27 @@ const ElementRenderer = React.memo(function ElementRenderer({
     );
 
   return (
-    <ElementErrorBoundary elementType={resolvedElement.type}>
+    <ElementErrorBoundary
+      elementType={resolvedElement.type}
+      resetKey={signatures[elementKey ?? ""]}
+    >
       {tagged}
     </ElementErrorBoundary>
   );
-});
+}
+
+const ElementRenderer = React.memo(
+  function ElementRenderer(props: ElementRendererProps) {
+    return <ReactiveElementRenderer {...props} />;
+  },
+  (previous, next) =>
+    previous.elementKey === next.elementKey &&
+    previous.signatures[previous.elementKey ?? ""] ===
+      next.signatures[next.elementKey ?? ""] &&
+    previous.registry === next.registry &&
+    previous.loading === next.loading &&
+    previous.fallback === next.fallback,
+);
 
 // ---------------------------------------------------------------------------
 // RepeatChildren -- renders child elements once per item in a state array.
@@ -511,6 +723,7 @@ function RepeatChildren({
   registry,
   loading,
   fallback,
+  signatures,
   itemFilter,
 }: {
   element: UIElement;
@@ -518,6 +731,7 @@ function RepeatChildren({
   registry: ComponentRegistry;
   loading?: boolean;
   fallback?: ComponentRenderer;
+  signatures: Record<string, number>;
   itemFilter?: UIElement["visible"];
 }) {
   const { state } = useStateStore();
@@ -589,6 +803,7 @@ function RepeatChildren({
                   registry={registry}
                   loading={loading}
                   fallback={fallback}
+                  signatures={signatures}
                 />
               );
             })}
@@ -603,6 +818,7 @@ function RepeatChildren({
  * Main renderer component
  */
 export function Renderer({ spec, registry, loading, fallback }: RendererProps) {
+  const signatures = useElementSignatures(spec);
   if (!spec || !spec.root) {
     return null;
   }
@@ -620,6 +836,7 @@ export function Renderer({ spec, registry, loading, fallback }: RendererProps) {
       registry={registry}
       loading={loading}
       fallback={fallback}
+      signatures={signatures}
     />
   );
 }
