@@ -220,9 +220,92 @@ function stabilizeRecord<T extends Record<string, unknown> | undefined>(
   return value;
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object") return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function structurallyEqual(previous: unknown, next: unknown): boolean {
+  if (Object.is(previous, next)) return true;
+  const previousIsArray = Array.isArray(previous);
+  if (previousIsArray !== Array.isArray(next)) return false;
+  if (
+    !previousIsArray &&
+    (previous === null ||
+      next === null ||
+      typeof previous !== "object" ||
+      typeof next !== "object")
+  ) {
+    return false;
+  }
+
+  const previousRecord = previous as Record<string, unknown>;
+  const nextRecord = next as Record<string, unknown>;
+  const keys = Object.keys(nextRecord);
+  if (
+    (previousIsArray &&
+      (previous as unknown[]).length !== (next as unknown[]).length) ||
+    keys.length !== Object.keys(previousRecord).length
+  ) {
+    return false;
+  }
+  return keys.every(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(previousRecord, key) &&
+      structurallyEqual(previousRecord[key], nextRecord[key]),
+  );
+}
+
+function snapshotStructuralValue(value: unknown): unknown {
+  if (value === null || typeof value !== "object") return value;
+  const snapshot: Record<string, unknown> | unknown[] = Array.isArray(value)
+    ? new Array(value.length)
+    : {};
+  for (const key of Object.keys(value)) {
+    (snapshot as Record<string, unknown>)[key] = snapshotStructuralValue(
+      (value as Record<string, unknown>)[key],
+    );
+  }
+  return snapshot;
+}
+
+function shareResolvedValue(previous: unknown, next: unknown): unknown {
+  if (Object.is(previous, next)) return previous;
+  const previousIsArray = Array.isArray(previous);
+  if (previousIsArray !== Array.isArray(next)) return next;
+  if (!previousIsArray && (!isPlainRecord(previous) || !isPlainRecord(next))) {
+    return next;
+  }
+
+  // `next` can hold containers owned by the state model, directives, or
+  // computed functions, so share into a copy instead of writing into it.
+  const previousRecord = previous as Record<string, unknown>;
+  const nextRecord = next as Record<string, unknown>;
+  const keys = Object.keys(nextRecord);
+  const shared: Record<string, unknown> | unknown[] = previousIsArray
+    ? new Array((next as unknown[]).length)
+    : {};
+  let unchanged =
+    (!previousIsArray ||
+      (previous as unknown[]).length === (next as unknown[]).length) &&
+    keys.length === Object.keys(previousRecord).length;
+  for (const key of keys) {
+    let value = nextRecord[key];
+    if (Object.prototype.hasOwnProperty.call(previousRecord, key)) {
+      value = shareResolvedValue(previousRecord[key], value);
+      if (!Object.is(previousRecord[key], value)) unchanged = false;
+    } else {
+      unchanged = false;
+    }
+    (shared as Record<string, unknown>)[key] = value;
+  }
+  return unchanged ? previous : shared;
+}
+
 interface ElementSignatureEntry {
-  own: string;
-  children: string;
+  own: UIElement;
+  children: Array<[string, number]>;
   version: number;
 }
 
@@ -292,18 +375,19 @@ function useElementSignatures(spec: Spec | null): Record<string, number> {
         continue;
       }
 
-      const own = JSON.stringify([
-        frame.element,
-        Object.keys(frame.element.props ?? {}),
-      ]);
-      const childVersions = JSON.stringify(frame.childVersions);
       const prior = previous[frame.key];
       const version =
-        prior?.own === own && prior.children === childVersions
+        prior &&
+        structurallyEqual(prior.own, frame.element) &&
+        structurallyEqual(prior.children, frame.childVersions)
           ? prior.version
           : ++versionRef.current;
       visiting.delete(frame.key);
-      next[frame.key] = { own, children: childVersions, version };
+      next[frame.key] = {
+        own: snapshotStructuralValue(frame.element) as UIElement,
+        children: frame.childVersions,
+        version,
+      };
       signatures[frame.key] = version;
       stack.pop();
     }
@@ -576,10 +660,11 @@ function ReactiveElementRenderer({
   );
 
   // Resolve dynamic prop expressions ($state, $item, $index, $bindState, $bindItem, $cond/$then/$else)
-  const resolvedProps = stabilizeRecord(
+  const resolvedProps = shareResolvedValue(
+    stableResolvedPropsRef.current,
     resolveElementProps(rawProps, fullCtx),
-    stableResolvedPropsRef,
-  );
+  ) as Record<string, unknown>;
+  stableResolvedPropsRef.current = resolvedProps;
 
   const resolvedElement =
     resolvedProps !== element.props
